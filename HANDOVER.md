@@ -326,3 +326,31 @@ real, live elements laid over the painted ones. Positions are in artwork pixels 
 - Loading bar: real checkpoints (`__cskProg(n)` between the script tags in `index.html`), creeps between them,
   hits 100% on window load, then fades out. 7 s safety timeout so it can never block play.
 - The old lobby CSS (`.lob-wrap` etc.) was replaced; `theme-lobby.css` now also holds the loading-screen styles.
+
+### Follow-up tweaks (waiting room)
+- START needs at least 2 players (host + 1) and every non-host ready; alone in a room it stays disabled.
+- Lobby shows the player's callsign (the name typed on the home screen) - never the Google name/Gmail. Only the
+  Google profile picture is used from the account. (`myAccount()` in lobby.js)
+- Avatar enlarged ~30% (covers the painted ring, has its own silver ring); HOST tag moved to the seat corner.
+
+---
+
+## Loading screen on every switch, host kick, callsign-only names (latest change)
+
+**Loading screen (`loading.js`, markup `#csk-load` in index.html, styles in theme-lobby.css).**
+Shown for Create/Join Room, lobby -> match, leaving the lobby, being kicked, host leaving, Play Solo.
+`CSKLoad.show()` / `CSKLoad.hide({fast:1})` / `CSKLoad.around(fn)`. Min on-screen time 1.2 s (`MIN_MS`), 25 s safety close.
+The tip painted into `loading-bg.jpg` was painted out; a live `.sp-tip` sits there instead. `CSKTips` rotates tips every
+2.3 s from a shuffled bag (no repeats until all are shown; a new run never starts on the last tip). Edit the `TIPS` array
+in loading.js to change the tip list. The first-boot splash uses the same rotator.
+
+**Host kick.** Host sees a kick button on other players' seats (tap once = "KICK?", tap again = remove; hidden once the
+countdown starts). Writes `rooms/<CODE>/kick/<key>` = server timestamp, keys = persistent device id (`csk-did` in
+localStorage) and account uid. Kicked client is sent home; rejoin is blocked for `KICK_COOL` (120 s) by both the server
+record and a local `csk-kick:<CODE>` flag. Enforcement is client-side: Firebase rules must allow writes to `rooms/<CODE>/kick`,
+and a hard guarantee would need rules too.
+
+**Callsign only.** `ARA.account().name`, the hidden account widget and the lobby now use the permanent callsign
+(`ARA.callsign()`), never the Google display name/email. Only the profile photo comes from Google.
+
+Tested with a mocked Firebase (two simulated clients): 34/34 checks. Not yet tested against live Firebase.

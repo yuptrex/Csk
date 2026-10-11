@@ -31,8 +31,18 @@
   <img class="sp-bg" src="loading-bg.jpg" alt="" draggable="false" decoding="sync" fetchpriority="high">
   <div class="sp-ui">
     <div class="sp-track"><div class="sp-fill" id="sp-fill"></div><div class="sp-pct" id="sp-pct">0%</div></div>
+    <div class="sp-tip" id="sp-tip"></div>
   </div>
 </div>
+<!-- Same loading art, reused for every screen switch (home -> waiting room -> match, leaving, kicked, solo) -->
+<div id="csk-load" hidden aria-hidden="true">
+  <img class="sp-bg" src="loading-bg.jpg" alt="" draggable="false" decoding="sync">
+  <div class="sp-ui">
+    <div class="sp-track"><div class="sp-fill" id="ld-fill"></div><div class="sp-pct" id="ld-pct">0%</div></div>
+    <div class="sp-tip" id="ld-tip"></div>
+  </div>
+</div>
+<script src="loading.js"></script>
 <script>
 /* Loading screen progress: real checkpoints are reported by __cskProg(n) between the big script loads below;
    in between, the bar creeps forward so it never looks frozen. It reaches 100% on window "load", then fades out.
@@ -47,8 +57,9 @@
     var goal=closing?100:target;
     shown+=(goal-shown)*.14+(goal>shown?.12:0);if(shown>goal)shown=goal;
     paint();
-    if(closing&&shown>=99.6&&age>=MIN_MS){clearInterval(iv);shown=100;paint();setTimeout(function(){el.classList.add('csk-hide')},260)}
+    if(closing&&shown>=99.6&&age>=MIN_MS){clearInterval(iv);shown=100;paint();setTimeout(function(){el.classList.add('csk-hide');if(stopTips)setTimeout(stopTips,600)},260)}
   },33);
+  var stopTips=window.CSKTips?CSKTips.attach(document.getElementById('sp-tip')):null;
   function finish(){closing=1}
   if(document.readyState==='complete')finish();else window.addEventListener('load',finish);
   setTimeout(finish,7000);  /* safety net */

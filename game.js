@@ -1389,7 +1389,7 @@ async function syncLayout(){const c=(await ref('layout').once('value')).val(),l=
 
 /* ---------- UI ---------- */
 function ui(sub,bad){const a=$('acc');if(!a)return;
- const signed=!!(user||hint),nm=(user&&(user.displayName||user.email))||(hint&&hint.name)||'Player',s=S(),unsaved=!signed&&(s.k>0||s.m>0);
+ const signed=!!(user||hint),nm=locked||(($('nm')&&$('nm').value)||'').trim().slice(0,12)||'Player',s=S(),unsaved=!signed&&(s.k>0||s.m>0);
  a.dataset.s=busy?'busy':signed?'in':'guest';a.dataset.nudge=unsaved?'1':'0';
  $('acav').textContent=signed?(String(nm).trim().charAt(0).toUpperCase()||'P'):'G';
  $('acn').textContent=signed?nm:'Guest';
@@ -1458,8 +1458,8 @@ async function signOut(){if(busy)return;busy=true;ui('Saving…');
 
 /* ---------- hooks used by the game ---------- */
 function saveStats(st){if(!(user||hint)){ui();return}LS('ar-stats',JSON.stringify(st));dirty=true;if(user)schedule()}
-window.ARA={hint:()=>!!hint,saveStats:saveStats,profile:profile,wipe:wipe,flush:()=>{pushLayout();return push()},saveLayout:saveLayout,signedIn:()=>!!user,
- account:()=>(user||hint)?{uid:(user||hint).uid,name:(user&&(user.displayName||user.email))||(hint&&hint.name)||'Player',photo:(user&&user.photoURL)||(hint&&hint.photo)||''}:null,
+window.ARA={callsign:()=>locked||'',hint:()=>!!hint,saveStats:saveStats,profile:profile,wipe:wipe,flush:()=>{pushLayout();return push()},saveLayout:saveLayout,signedIn:()=>!!user,
+ account:()=>(user||hint)?{uid:(user||hint).uid,name:locked||(($('nm')&&$('nm').value)||'').trim().slice(0,12)||'Player',photo:(user&&user.photoURL)||(hint&&hint.photo)||''}:null,
  _t:{S:S,base:()=>base}};
 setTimeout(()=>{const b=$('acbtn');if(b)b.onclick=()=>(user||hint)?signOut():signIn();{const c=J('ar-cs');if(hint&&c&&c.uid==hint.uid&&c.name)lockName(String(c.name))}ui();attach();
  document.addEventListener('visibilitychange',()=>{if(document.hidden)push()});addEventListener('pagehide',()=>{pushLayout();push()})},0);

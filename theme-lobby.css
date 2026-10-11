@@ -74,10 +74,11 @@
 .lob-open{cursor:pointer}
 .lob-seat>*{position:absolute}
 /* avatar sits inside the painted ring and covers the placeholder silhouette */
-.lob-av{left:35.3%;top:11%;width:34%;height:55%;border-radius:50%;overflow:hidden;
-  background:radial-gradient(circle at 50% 35%,#27466f,#0b1626);display:flex;align-items:center;justify-content:center}
+.lob-av{left:31.2%;top:3.7%;width:42.3%;height:66%;border-radius:50%;overflow:hidden;
+  background:radial-gradient(circle at 50% 35%,#27466f,#0b1626);display:flex;align-items:center;justify-content:center;
+  border:calc(var(--u) * 3) solid #c9d3df;box-shadow:0 0 0 1px #0008,0 0 calc(var(--u) * 10) #000a}
 .lob-av img{width:100%;height:100%;object-fit:cover;display:block}
-.lob-ini{font-style:normal;font-weight:700;font-size:calc(var(--u) * 34);color:var(--csk-amber-soft);line-height:1}
+.lob-ini{font-style:normal;font-weight:700;font-size:calc(var(--u) * 44);color:var(--csk-amber-soft);line-height:1}
 /* name plate: text lives inside the painted blue pill */
 .lob-pill{left:10.8%;top:71.6%;width:80.9%;height:23.9%;display:flex;align-items:center;justify-content:center;
   padding:0 6%;font-weight:700;font-size:calc(var(--u) * 15);letter-spacing:.03em;color:#fff;line-height:1;
@@ -90,11 +91,11 @@
   box-shadow:0 0 calc(var(--u) * 16) #ffb02e99,inset 0 0 calc(var(--u) * 14) #ffb02e44;border:1px solid #ffd067aa}
 .lob-me .lob-glow{opacity:1;border:2px solid #ffd067}
 .lob-rdy .lob-pill{color:var(--csk-amber-soft)}
-.lob-ck{left:57%;top:50%;width:calc(var(--u) * 24);height:calc(var(--u) * 24);border-radius:50%;
+.lob-ck{left:63%;top:48%;width:calc(var(--u) * 24);height:calc(var(--u) * 24);border-radius:50%;
   background:#22c55e;border:2px solid #eaffef;display:flex;align-items:center;justify-content:center;
   box-shadow:0 0 calc(var(--u) * 10) #22c55eaa}
 .lob-ck svg{width:62%;height:62%;stroke:#fff;fill:none;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round}
-.lob-host-tag{right:4%;top:6%;font-weight:700;font-size:calc(var(--u) * 11);letter-spacing:.14em;color:#2a0a05;
+.lob-host-tag{right:2%;top:4%;font-weight:700;font-size:calc(var(--u) * 9.5);letter-spacing:.1em;color:#2a0a05;
   background:linear-gradient(180deg,#ff6a52,#e8392a);border:1px solid #ff8a73;border-radius:999px;padding:.22em .8em;
   box-shadow:0 2px 8px -2px #ff3a2a99;line-height:1.2}
 /* locked seats (only 8 are playable) */
@@ -134,3 +135,43 @@
   font-family:var(--csk-font-display);font-weight:700;letter-spacing:.06em;color:#fff;line-height:1;
   font-size:calc(var(--u) * 26);-webkit-text-stroke:calc(var(--u) * 3) #3a2200;paint-order:stroke fill;
   text-shadow:0 1px 3px #000a}
+
+/* ---------------------------------------------------------- live tip (the painted tip was removed from loading-bg.jpg) */
+/* sits where the painted tip used to be (artwork px: x 560-1423, y 681-705) */
+.sp-tip{position:absolute;left:calc(560 / 1983 * 100%);width:calc(863 / 1983 * 100%);top:calc(681 / 793 * 100%);height:calc(24 / 793 * 100%);
+  display:flex;align-items:center;justify-content:center;text-align:center;white-space:nowrap;overflow:hidden;
+  font-family:var(--csk-font-body,Inter,system-ui,sans-serif);font-weight:500;letter-spacing:.01em;color:#fff;
+  font-size:calc(var(--u) * 17.5);line-height:1;text-shadow:0 1px 3px #000,0 0 calc(var(--u) * 8) #000;
+  transition:opacity .24s ease;pointer-events:none}
+
+/* ---------------------------------------------------------- reusable loader (every screen switch) */
+#csk-load{position:fixed;inset:0;z-index:990;display:block;background:#05080b;overflow:hidden;container-type:size;
+  opacity:0;visibility:hidden;pointer-events:none;transition:opacity .28s ease,visibility .28s}
+#csk-load.on{opacity:1;visibility:visible;pointer-events:auto}   /* while up it also swallows taps, so nothing double-fires */
+#csk-load[hidden]{display:none}
+#csk-load .sp-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;pointer-events:none;-webkit-user-drag:none}
+#csk-load .sp-ui{position:absolute;inset:0;--u:min(100cqw / 1983, 100cqh / 793)}
+#csk-load .sp-track{position:absolute;overflow:hidden;
+  left:calc(690 / 1983 * 100%);top:calc(565 / 793 * 100%);width:calc(596 / 1983 * 100%);height:calc(29 / 793 * 100%)}
+#csk-load .sp-fill{position:absolute;left:0;top:0;bottom:0;width:0;
+  background:linear-gradient(180deg,#fff08a 0,#ffd21f 22%,#ffb000 55%,#ff8a00 100%);
+  clip-path:polygon(0 0,100% 0,calc(100% - 9px) 100%,0 100%);box-shadow:inset 0 1px 0 #fff8c8}
+#csk-load .sp-pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:var(--csk-font-display);font-weight:700;letter-spacing:.06em;color:#fff;line-height:1;
+  font-size:calc(var(--u) * 26);-webkit-text-stroke:calc(var(--u) * 3) #3a2200;paint-order:stroke fill;text-shadow:0 1px 3px #000a}
+/* the splash needs --u for the tip font size too (it already defines it on .sp-ui) */
+
+/* ---------------------------------------------------------- host: remove-player button on a seat */
+.lob-kick{position:absolute;left:2%;top:38%;z-index:3;display:flex;width:auto;max-width:90%;align-items:center;justify-content:center;gap:.35em;
+  min-width:calc(var(--u) * 26);height:calc(var(--u) * 26);padding:0 calc(var(--u) * 7);margin:0;margin-bottom:0;cursor:pointer;
+  font-family:var(--csk-font-display);font-weight:700;font-size:calc(var(--u) * 12);letter-spacing:.08em;line-height:1;color:#ffd9d4;
+  background:linear-gradient(180deg,#3a1411ee,#1d0907ee);border:1px solid #ff6a5299;border-radius:999px;
+  box-shadow:0 2px 8px -2px #000c;-webkit-tap-highlight-color:transparent;touch-action:manipulation;
+  transition:background .12s,transform .08s,box-shadow .12s}
+.lob-kick svg{width:calc(var(--u) * 12);height:calc(var(--u) * 12);stroke:currentColor;fill:none;stroke-width:3;stroke-linecap:round}
+.lob-kick span{display:none}
+.lob-kick:hover{background:linear-gradient(180deg,#7a241c,#43120d);box-shadow:0 0 calc(var(--u) * 10) #ff3a2a88}
+.lob-kick:active{transform:scale(.94)}
+.lob-kick.arm{background:linear-gradient(180deg,#ff6a52,#d8321f);border-color:#ffb1a3;color:#fff;box-shadow:0 0 calc(var(--u) * 12) #ff3a2acc}
+.lob-kick.arm span{display:inline}
+.lob-kick:focus-visible{outline:2px solid #ffd067;outline-offset:2px}
