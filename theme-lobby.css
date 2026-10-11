@@ -100,9 +100,10 @@
 .lob-seats{
   flex:1 1 auto;min-height:0;
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(7.2em,1fr));
-  grid-auto-rows:min-content;
-  align-content:start;
+  /* ALWAYS 10 columns x 2 rows = 20 seats, on PC and phones alike */
+  grid-template-columns:repeat(10,minmax(0,1fr));
+  grid-template-rows:repeat(2,minmax(7.6em,1fr));
+  align-content:stretch;
   gap:.8em;
   overflow-y:auto;overflow-x:hidden;
   padding:.9em .3em .4em;   /* top room so HOST tag isn't clipped */
@@ -113,7 +114,7 @@
 .lob-seat{
   position:relative;
   min-width:0;
-  min-height:7.6em;
+  min-height:0;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:.45em;
   border-radius:var(--csk-radius-md);
@@ -249,14 +250,22 @@
   .lob-bottom .lob-ready,.lob-bottom .lob-start{flex:1 1 40%;padding-left:.8em;padding-right:.8em}
   .lob-hint{order:3;flex:1 1 100%;text-align:center}
 }
-/* short landscape phones: tighter chrome so seats get the height */
-@media (max-height:480px){
-  .lob-wrap{gap:.6em;padding:.8em 1em 1em}
-  .lob-seat{min-height:6.4em;gap:.3em;padding:.5em .4em}
-  .lob-av{width:2.8em;height:2.8em}
-  .lob-seats{gap:.6em;padding-top:.8em;grid-template-columns:repeat(auto-fill,minmax(6em,1fr))}
-  .lob-seat.lob-locked{min-height:2.2em;padding:.3em}
+/* short screens (phones in landscape, small windows): the panel takes the full visible height and the
+   10x2 grid stretches to fit it, so all 20 seats are visible at once with no scrolling - same as PC. */
+@media (max-height:600px){
+  .lob-wrap{height:100%;gap:.55em;padding:.8em 1em .9em}
+  .lob-seats{grid-template-rows:repeat(2,minmax(0,1fr));gap:.5em;padding:.8em .2em .2em}
+  .lob-seat{gap:.25em;padding:.3em .25em}
+  .lob-av{width:2.6em;height:2.6em}
+  .lob-plus{font-size:1.4em}
   .lob-bottom{padding-top:.5em}
+  .lob-top{flex-wrap:nowrap}
+}
+/* portrait phones (the game itself wants landscape, but keep the lobby usable): 5 x 4 = 20 seats, all visible */
+@media (orientation:portrait) and (max-width:700px){
+  .lob-wrap{height:100%}
+  .lob-seats{grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:repeat(4,minmax(0,1fr));gap:.6em}
+  .lob-top{flex-wrap:wrap}
 }
 
 /* ---------- countdown ---------- */

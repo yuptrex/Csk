@@ -785,24 +785,14 @@ fastTap($('pz'),()=>{sfx('ui',{j:0});setPause(true)});fastTap($('pr'),()=>{sfx('
 fastTap($('ph'),()=>{try{net&&net.send({t:'bye',id:myId})}catch(e){}setTimeout(()=>location.reload(),60)});
 addEventListener('resize',pzPos);document.addEventListener('visibilitychange',()=>{if(document.hidden&&sim&&!net)setPause(true)});
 let last=0,acc=0,sT=0,iT=0,AGE=0,F60=1,snapOk=0;
-/* ---- 90 fps governor ----
-   Measures real frame time. If frames take longer than the target (the display's refresh, never more than 90 fps),
-   it lowers render resolution step by step (and below 72% also drops canvas glows/shadows); when there is headroom
-   again it raises quality slowly. Gameplay is untouched. */
-const PERF={tiers:[1,.85,.72,.6,.5],ti:0,buf:[],last:0,hold:0,bad:0,good:0,noUp:0,upAt:0,disp:1e9};
-const REFS=[1000/144,1000/120,1000/90,1000/75,1000/60];
-function perfTier(i){i=Math.max(0,Math.min(PERF.tiers.length-1,i));if(i==PERF.ti)return;PERF.ti=i;rScale=PERF.tiers[i];PFQ.lq=i>=2?1:0;rs();PERF.buf.length=0;PERF.bad=PERF.good=0;PERF.hold=performance.now()+1500}
-function perfGov(now){
- if(document.hidden||(paused&&!net)){PERF.last=0;return}
- const d=PERF.last?now-PERF.last:0;PERF.last=now;
- if(!d||d>120||now<PERF.hold)return;
- const bf=PERF.buf;bf.push(d);if(bf.length<45)return;
- const so=bf.slice().sort((x,y)=>x-y),p15=so[(so.length*.15)|0];let avg=0;for(const x of bf)avg+=x;avg/=bf.length;bf.length=0;
- let want=REFS[0];for(const r of REFS)if(Math.abs(r-p15)<Math.abs(want-p15))want=r;
- PERF.disp=Math.min(PERF.disp,want);const t=Math.max(PERF.disp,1000/90);
- if(avg>t*1.18){PERF.good=0;if(++PERF.bad>=2){if(PERF.upAt&&now-PERF.upAt<8000)PERF.noUp=now+45000;perfTier(PERF.ti+1)}}
- else{PERF.bad=0;if(avg<t*1.07&&PERF.ti>0&&now>PERF.noUp){if(++PERF.good>=8){PERF.upAt=now;perfTier(PERF.ti-1)}}else PERF.good=0}
-}
+/* ---- quality lock (replaces the old adaptive "90 fps governor") ----
+   The old governor lowered render resolution (100% -> 50%) and switched off glows/shadows whenever frames ran
+   slow. That is what made text turn blurry on mobile Chrome. Quality is now LOCKED: resolution scale is always
+   1.0 (full device pixel ratio, capped at 2) and glows/shadows are always on. perfGov() is kept as a stub so
+   existing calls and the FPS read-out still work, but it never changes quality. */
+const PERF={tiers:[1],ti:0,buf:[],last:0,hold:0,bad:0,good:0,noUp:0,upAt:0,disp:1e9};
+function perfTier(){}
+function perfGov(){}
 function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;try{perfGov(now)}catch(x){}try{musicTick(dt,now)}catch(x){}
   if(sim&&!net){if(paused){acc=0;AGE=0}else{acc+=dt;const m=sim.p[myId];let stp=0;while(acc>=TICK){if(m)m.in=readInput();sim.step(TICK);acc-=TICK;stp=1}
    if(stp||!snapOk){snap=sim.snap();snapAt=now;snapOk=1}   /* build a snapshot only when the 60 Hz sim actually advanced */

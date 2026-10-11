@@ -290,3 +290,20 @@ any other change to this project per the testing note above.
   - `#join` is skipped until a 5-character room code is typed.
   - On phones, also tries `screen.orientation.lock('landscape')` once full screen is on.
 - It does not touch game state; `game.js` / `lobby.js` are unchanged.
+
+---
+
+## Quality lock + mobile lobby fit (latest change)
+
+**Blur on mobile Chrome — cause & fix (`game.js`).** The adaptive "90 fps governor" lowered the canvas
+render scale (100% → 85 → 72 → 60 → 50%) and turned off glows/shadows whenever frames ran slow. Text is drawn
+on the canvas, so it went blurry. `perfGov()` / `perfTier()` are now no-ops: render scale is always 1.0
+(device pixel ratio, capped at 2) and shadows are always on. The FPS counter still works.
+
+**FPS.** Frame rate is set by the display's refresh rate (`requestAnimationFrame`); a web page cannot force
+120 fps. Nothing in the game caps it any more. For 120 fps on a phone: use a 120 Hz device, turn off
+battery saver / "adaptive refresh" limits, and run in full screen.
+
+**Lobby (`theme-lobby.css`).** Seats are always a fixed 10 × 2 grid (same as PC), stretched to the visible
+height on short screens (`max-height:600px`) so all 20 seats show with no scrolling. Portrait phones get 5 × 4.
+Locked seats are the same size as the others on every device.
