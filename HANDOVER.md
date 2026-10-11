@@ -1,0 +1,278 @@
+# CSuperKnights — Visual Overhaul: Final Project Notes
+
+## Status: Complete (Phase 1 + Phase 2)
+
+The visual overhaul is finished. This file documents what changed, how
+the project is structured, what was intentionally left alone and why,
+and a short list of optional ideas if the project is picked up again
+later.
+
+---
+
+## Summary
+
+The game originally shipped as **one 2,422,379-byte `fkk.html` file** —
+all CSS, all game logic, and a large base64 sound bank inlined together
+in a single document. The home screen and settings dialog used plain
+system fonts, flat dark boxes and inline placeholder icons.
+
+The project is now:
+- **Split into separate HTML/CSS/JS/asset files**, with every element
+  `id`/`class` the game's JavaScript depends on kept **byte-for-byte
+  identical** to the original. No gameplay code was rewritten.
+- **Re-skinned throughout** — home menu, settings dialog, pause menu,
+  button-layout editor, scoreboard, minimap frame and small HUD chrome
+  all now share one consistent visual language: a dark glass-panel
+  look, a gold gradient accent, condensed display type for headings and
+  buttons, and layered SVG vector art (arena + knight silhouettes) on
+  the home screen and a new loading splash.
+- **Verified working end-to-end** in a headless browser: home menu →
+  settings → Play Solo → in-match HUD → pause → button-layout editor →
+  scoreboard, at both desktop and mobile viewport sizes, with no
+  JavaScript errors introduced by the split or the re-skin.
+
+**Nothing about core gameplay (canvas rendering, physics, bot AI,
+multiplayer/Firebase networking, controls, scoring) was changed.** Every
+change in this project is CSS, SVG assets, or small additive markup/JS
+that the original game script never reads from or depends on.
+
+---
+
+## Final file structure
+
+```
+index.html                → page shell (was 2,200 lines inline, now ~175)
+styles/
+  game-core.css            → original game CSS, extracted unmodified
+                             (canvas HUD positioning/sizing, dialogs,
+                             editor, swap/crate panel mechanics, etc.)
+  home-base.css             → original "home6" home-menu layout rules,
+                             extracted unmodified (structure only)
+  theme-vars.css            → design tokens: colors, fonts, shadows,
+                             radii, easing — the single place to retune
+                             the palette
+  theme-home.css             → home menu + settings dialog re-skin
+                             (Phase 1): buttons, cards, logo, inputs
+  theme-hud.css               → in-match HUD + pause menu + editor +
+                             scoreboard + loading splash re-skin
+                             (Phase 2)
+js/
+  sfx-data.js                → original base64 sound bank, split out so
+                             index.html stays readable (~2MB, unmodified)
+  game.js                    → all original gameplay/menu/network logic,
+                             concatenated in original order, unmodified
+assets/
+  hero-bg.svg                 → layered vector background (arena towers,
+                             knight silhouettes, embers, floor rings),
+                             used behind both the home menu and the
+                             loading splash
+  icons.svg                   → SVG symbol sprite: play, join, host,
+                             settings, shield/logo, map icons, plus
+                             pause/resume/home/reset/crate/medkit added
+                             in Phase 2 for future use
+HANDOVER.md                 → this file
+```
+
+### Why it's split this way
+- **`game-core.css` / `home-base.css` vs `theme-*.css`:** the original
+  rules stay intact as a base layer that the game's canvas-sizing math
+  (`--uis`, `zoom`, fixed-position HUD elements) depends on. The theme
+  files load *after* them and only ever add colors, gradients, fonts,
+  shadows and motion — never layout, position, or sizing. If a palette
+  change is ever wanted, `theme-vars.css` and `theme-home.css` /
+  `theme-hud.css` are the only files that should need touching.
+- **`sfx-data.js` stays separate** because it's ~2MB of base64 audio on
+  a single line; keeping it out of `index.html` keeps the page source
+  readable.
+- **`game.js` stays as one file,** not split further into net/account/
+  settings modules, because the original inline scripts share top-level
+  variables and rely on executing in a specific order. Splitting it
+  into ES modules would need those shared globals converted to explicit
+  imports/exports — a real refactor with real regression risk, not a
+  visual change, so it was deliberately left out of this project (see
+  "Not done" below).
+
+---
+
+## What the re-skin actually changed
+
+- **Typography:** `Rajdhani` (condensed, bold — for headings, buttons,
+  callouts) paired with `Inter` (body text), loaded from Google Fonts
+  with a system-font fallback for offline use.
+- **Buttons:** primary actions (Play Solo, Resume, Create Room) use a
+  gold gradient with an inset highlight, a soft amber drop shadow, and
+  a diagonal shine sweep on hover. Secondary buttons use a dark glass
+  treatment with an amber hover glow. All buttons have a visible focus
+  ring for keyboard accessibility.
+- **Vector art:** `assets/hero-bg.svg` — arena towers, two facing knight
+  silhouettes, a radial ember glow, and floor rings — sits behind the
+  home menu (slow CSS drift animation) and behind the new loading
+  splash. Respects `prefers-reduced-motion`.
+- **Icons:** a shared `assets/icons.svg` symbol sprite replaces
+  duplicated inline SVG paths, so new icons live in one place.
+- **Settings dialog:** reorganized into glass cards with amber section
+  headers, styled toggle switches and segmented controls.
+- **Pause menu:** same glass-card treatment, gradient Resume button,
+  dark glass secondary buttons (Button Layout / Exit to Home / the
+  game's own dynamically-added Settings button all pick up the shared
+  `.box button` styling automatically).
+- **Button-layout editor:** themed panel, amber label and slider accent,
+  gradient "Save & Close" button — the drag-to-position touch-control
+  editor itself (canvas-based) is untouched.
+- **Scoreboard, minimap frame, FPS counter, room-code pill, toast
+  message, error banner, "back to home" button:** all brought onto the
+  same glass-panel/amber-accent language instead of the original plain
+  dark boxes.
+- **New loading splash:** a full-screen panel showing the vector art,
+  the shield mark and a progress bar, shown while fonts/Firebase/the
+  game script initialize, then fades out. It cannot block play — it has
+  a hard 4-second safety timeout even if something upstream never fires
+  a `load` event.
+- **Weapon-swap popup, crate-open panel, kill banners, kill feed:**
+  intentionally left as-is. These already had bespoke glow/shine/HSL-
+  themed animations in the original CSS that were well above the
+  "boring HTML" bar — reskinning them further risked fighting their
+  existing per-weapon color theming for no visible benefit.
+
+## Not done (intentionally out of scope)
+
+- **Splitting `js/game.js` into smaller modules.** As noted above, the
+  original scripts share global state and rely on load order; doing
+  this safely is a structural refactor, not a visual one, and carries
+  real risk of subtle multiplayer/timing bugs. If this is wanted later,
+  budget it as its own task with its own testing pass — not bundled
+  into a visual project.
+- **Bundling Google Fonts locally / fully offline play.** The game
+  currently loads `Rajdhani`/`Inter` from Google Fonts and Firebase
+  from Google's CDN. Both already have sensible fallback behavior
+  (system fonts; the game's own "Firebase failed to load" message and
+  solo-mode-still-works path), so this was left as a network dependency
+  rather than vendoring ~5 font files and the Firebase SDK into the
+  project.
+- **A fully custom "Sign in with Google" button.** Kept Google's
+  official multi-color "G" mark, since altering it isn't just a style
+  choice — Google's brand guidelines require their sign-in buttons to
+  use their actual mark.
+
+## One technical note for deployment
+
+`assets/icons.svg` is referenced via `<use href="assets/icons.svg#...">`
+in several places (home logo, settings gear, play icon, splash mark).
+**This requires the page to be served over `http(s)://`** — a real or
+local web server. Opening `index.html` directly from disk (`file://`)
+will show blank icons in some browsers due to same-origin restrictions
+on cross-file SVG `<use>`. This is expected once the game is deployed to
+any normal web host (which it already needs, for Firebase to work) and
+is not a bug. If local double-click testing without a server is ever
+needed, the icon markup can be inlined as a fallback.
+
+---
+
+## Testing performed
+
+Using a local static file server and a headless Chromium browser:
+
+- **Home menu** — desktop (1280×800) and mobile (390×844): renders
+  correctly, inputs/buttons/map picker all styled and functional.
+- **Settings dialog** — opens, all cards/toggles/sliders/segmented
+  controls/keybinding grid render and respond.
+- **Play Solo** — canvas game boots, HUD (health, ammo, kill counter,
+  weapon-upgrade panel, minimap, medkits) renders and updates correctly.
+- **Pause menu** — opens via the in-game pause button, themed buttons
+  all present and clickable, at both desktop and mobile sizes.
+- **Button-layout editor** — opens from the pause menu, themed panel
+  renders over the live drag-to-position touch-control preview.
+- **Scoreboard** — opens (hold Tab), themed card renders over gameplay
+  without blocking input.
+- **Loading splash** — shows on first paint, displays the vector art
+  clearly, fades out automatically.
+- Confirmed via a static ID-diff that every `id` attribute present in
+  the original single file still exists somewhere in the project (the
+  only "missing" ones are the old `<style id="…">`/`<script id="sfxdata">`
+  wrapper tags, which no longer need an id now that their contents are
+  real files — nothing in the game ever selected a stylesheet by id).
+- The only console/network errors seen during testing were Google Fonts
+  and Firebase CDN calls being blocked by the *test sandbox's* outbound
+  network policy — not by anything in this project. Both will load
+  normally once the project is hosted anywhere with normal internet
+  access.
+
+---
+
+## If this project is picked up again later
+
+Nothing here is required — the visual goal of this project is done —
+but if there's appetite for more:
+
+1. Re-skin the weapon-swap and crate-open popups to use the same amber
+   palette as the rest of the UI instead of their current per-weapon
+   HSL theming (would need care not to break their existing color-coded
+   rarity/weapon-type system).
+2. Split `js/game.js` into modules, as its own scoped refactor with its
+   own test pass.
+3. Vendor the two Google Fonts and the Firebase SDK locally for fully
+   offline play.
+4. Add light/alternate color themes using `theme-vars.css`'s token
+   system (it's already structured so a second palette is a copy of
+   that one file).
+
+---
+
+## Home screen = full-screen artwork (latest change)
+
+- `assets/home-bg.jpg` (1983x793) is the whole home screen. It is stretched to
+  fill the viewport (no gaps, nothing cropped).
+- Real buttons sit invisibly on top of the painted ones. Positions live in
+  `index.html` as `--x --y --w --h` in **artwork pixels**; `styles/home-image.css`
+  converts them to % so they stay aligned at any screen size.
+- Each button has a `.face` (a copy of its painted region) that is shown on
+  hover / press and shrunk+dimmed for a "pressed" feel, plus a tap ripple
+  (`js/home-fx.js`) and the existing click sound + haptic tick.
+- `#nm` (callsign) sits on the top-right chip; `#rm` is the room-code field;
+  `#acbl` shows "SIGN OUT" over the Google button when signed in.
+- The ARENA / FORTRESS buttons are gone (kept hidden so game.js still binds);
+  the map is picked at random on every load of the home screen (`selLv` in game.js).
+- The old animated home canvas loop is no longer started.
+- To move a button: edit its `--x/--y/--w/--h` (and `--clip` for the press shape).
+- On a phone held upright the existing "rotate your phone" screen is shown.
+
+---
+
+## Room waiting lobby (latest change)
+
+Create Room / Join Room no longer drop a player straight into a live match. Both now land
+in a waiting room first:
+
+- **Login-gated room creation.** "Create Room" requires Google sign-in (`ARA.hint()`); the
+  button dims and shows a tooltip when signed out, and a clear toast appears if clicked
+  anyway.
+- **20 seats, 8 playable.** The lobby shows 20 seats (per spec), but the match's own netcode
+  caps real matches at `MAXH` (8) — seats 9–20 render as visually locked/unavailable rather
+  than being joinable. If the real cap is ever raised, only `MAXH` and the locked-seat check
+  in `js/lobby.js` need to change.
+- **Seats, not teams.** Players click any open seat to claim it; seats sync live for everyone
+  in the room via a new `rooms/<CODE>/lobby/<id>` Firebase node (added alongside, not instead
+  of, the existing `host`/`st`/`wd`/`in` nodes — nothing about the match's wire protocol
+  changed).
+- **Gmail avatar + host tag.** Each occupied seat shows the player's Google profile photo
+  (`photoURL`, now carried through `login()`/`window.ARA.account()`) or an initials fallback
+  if absent. The host's seat carries a red "HOST" banner.
+- **Ready-up + host start.** Each player toggles READY; the host's START MATCH button only
+  enables once every occupied seat is ready. Starting writes `rooms/<CODE>/lstart`, which
+  every client (host included) watches to begin an identical 15-second "match starting"
+  countdown, then hands off into the original `start(mode, room)` — gameplay itself is
+  untouched.
+- **Host-leave cleanup.** If the host leaves the lobby, the whole room is torn down (same as
+  the existing host-disconnect behavior mid-match) and any players still waiting are bounced
+  back to the home screen with a message, rather than being left in a dead lobby.
+
+New files: `js/lobby.js`, `styles/theme-lobby.css`. Small additive edits to `index.html`
+(lobby markup + script/link tags) and `js/game.js` (`photoURL` now carried in the login hint
+and exposed via `window.ARA.account()` — two small, additive lines only).
+
+**Not verified against a live Firebase project** (this environment has no outbound network).
+The flow was instead verified with a headless-browser test harness that mocks the Firebase
+Realtime Database/Auth SDK end-to-end — login, room create/join, seat selection, roster sync
+across two simulated clients, ready-gating, the 15s countdown, host-leave cleanup, and the
+handoff into the real match all passed. Worth a real-device smoke test once deployed, same as
+any other change to this project per the testing note above.

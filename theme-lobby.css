@@ -1,0 +1,224 @@
+/* ===========================================================
+   CSK Visual Theme — Room Lobby
+   Waiting-room overlay shown between Create/Join Room and the
+   actual match. Same rule as the other theme files: additive
+   only, no ids/classes the core game reads, loads after
+   game-core.css / home-base.css / theme-home.css / theme-hud.css.
+   =========================================================== */
+
+#lob{
+  position:fixed;inset:0;z-index:40;
+  display:flex;align-items:center;justify-content:center;
+  padding:24px;
+  background:
+    radial-gradient(900px 540px at 50% 20%,#1c2a3a66 0%,transparent 60%),
+    #04080cd9;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  font-family:var(--csk-font-body);
+}
+#lob[hidden]{display:none}
+
+.lob-wrap{
+  width:min(980px,96vw);
+  max-height:92vh;
+  display:flex;flex-direction:column;gap:14px;
+  background:linear-gradient(180deg,#141e28f2,#0b121af2);
+  border:1px solid var(--csk-line-soft);
+  box-shadow:var(--csk-shadow-2);
+  border-radius:var(--csk-radius-lg);
+  padding:18px 20px 20px;
+}
+
+.lob-top{
+  display:flex;align-items:center;gap:12px;
+  flex-wrap:wrap;
+}
+.lob-code{
+  font-family:var(--csk-font-display);
+  font-weight:700;letter-spacing:.1em;
+  color:var(--csk-text-dim);
+  background:#0d141c;border:1px solid var(--csk-line);
+  border-radius:var(--csk-radius-sm);
+  padding:8px 14px;cursor:pointer;
+  transition:border-color .18s,background .18s;
+}
+.lob-code b{color:var(--csk-amber);font-size:1.1em;letter-spacing:.14em;margin-left:4px}
+.lob-code:hover{border-color:#ffb02e99;background:#131c26}
+
+.lob-cnt{
+  font-family:var(--csk-font-display);
+  font-weight:600;letter-spacing:.06em;
+  color:var(--csk-text);
+  background:#ffffff0f;
+  border-radius:var(--csk-radius-sm);
+  padding:8px 14px;
+}
+
+.lob-leave{
+  margin-left:auto;
+  font-family:var(--csk-font-display);
+  font-weight:700;letter-spacing:.1em;
+  color:#ff9d8f;
+  background:#2a1310;border:1px solid #6b2a22;
+  border-radius:var(--csk-radius-sm);
+  padding:8px 16px;cursor:pointer;
+  transition:transform .12s var(--csk-ease),border-color .18s,background .18s;
+}
+.lob-leave:hover{border-color:#ff4a3a99;background:#391712;transform:translateY(-1px)}
+.lob-leave:active{transform:translateY(0) scale(.97)}
+
+.lob-seats{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:10px;
+  overflow-y:auto;
+  padding:2px 2px 4px;
+}
+@media (max-width:760px){.lob-seats{grid-template-columns:repeat(4,1fr)}}
+@media (max-width:520px){.lob-seats{grid-template-columns:repeat(3,1fr)}}
+
+.lob-seat{
+  position:relative;
+  aspect-ratio:1/1.08;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:6px;
+  border-radius:var(--csk-radius-md);
+  padding:8px 6px;
+  text-align:center;
+  box-shadow:var(--csk-shadow-1);
+}
+.lob-open{
+  background:linear-gradient(180deg,#121c26,#0c141c);
+  border:1px dashed var(--csk-line);
+  cursor:pointer;
+  transition:border-color .18s,background .18s,transform .12s var(--csk-ease);
+}
+.lob-open:hover{border-color:#ffb02e99;background:linear-gradient(180deg,#182330,#0f1820);transform:translateY(-2px)}
+.lob-open:active{transform:translateY(0) scale(.97)}
+.lob-plus{font-family:var(--csk-font-display);font-size:22px;color:var(--csk-text-dim);font-weight:700}
+.lob-open .lob-nm{color:var(--csk-text-dim);font-size:11px;letter-spacing:.04em}
+
+.lob-filled{
+  background:linear-gradient(180deg,#182330,#0e161e);
+  border:1px solid var(--csk-line-soft);
+}
+.lob-filled.lob-rdy{
+  border-color:#ffb02e88;
+  box-shadow:var(--csk-glow-amber);
+}
+.lob-filled.lob-me{outline:1px solid #ffb02e55;outline-offset:-1px}
+
+.lob-seat.lob-locked{
+  background:repeating-linear-gradient(135deg,#0a0f14,#0a0f14 6px,#0d1419 6px,#0d1419 12px);
+  border:1px solid #1a2530;
+  cursor:default;
+}
+.lob-locked-inner{
+  font-family:var(--csk-font-display);
+  font-weight:700;letter-spacing:.08em;font-size:10.5px;
+  color:#4c5c68;
+}
+
+.lob-host-tag{
+  position:absolute;top:-8px;left:50%;transform:translateX(-50%);
+  font-family:var(--csk-font-display);
+  font-size:9.5px;font-weight:700;letter-spacing:.14em;
+  color:#2a0a05;
+  background:linear-gradient(180deg,#ff6a52,#e8392a);
+  border:1px solid #ff8a73;
+  border-radius:999px;
+  padding:3px 10px;
+  box-shadow:0 4px 12px -2px #ff3a2a88,inset 0 1px 0 #ffffffaa;
+  white-space:nowrap;
+}
+
+.lob-av{
+  width:46px;height:46px;border-radius:50%;
+  overflow:hidden;
+  background:#0d141c;
+  border:1px solid var(--csk-line-soft);
+  display:flex;align-items:center;justify-content:center;
+  flex:0 0 auto;
+}
+.lob-av img{width:100%;height:100%;object-fit:cover;display:block}
+.lob-ini{
+  font-family:var(--csk-font-display);font-weight:700;font-size:17px;
+  color:var(--csk-amber-soft);
+}
+
+.lob-nm{
+  font-size:12px;font-weight:600;color:var(--csk-text);
+  max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.lob-nm small{color:var(--csk-text-dim);font-weight:400}
+
+.lob-st{
+  font-family:var(--csk-font-display);
+  font-size:9.5px;font-weight:700;letter-spacing:.1em;
+  color:var(--csk-text-dim);
+}
+.lob-rdy .lob-st{color:var(--csk-amber)}
+
+.lob-bottom{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  padding-top:6px;border-top:1px solid var(--csk-line-soft);
+}
+.lob-hint{
+  font-size:12px;color:var(--csk-text-dim);
+  flex:1 1 180px;
+}
+
+.lob-ready{
+  font-family:var(--csk-font-display);font-weight:700;letter-spacing:.1em;
+  color:var(--csk-text);
+  background:linear-gradient(180deg,#1c2733,#121a22);
+  border:1px solid var(--csk-line-soft);
+  border-radius:var(--csk-radius-sm);
+  padding:12px 22px;cursor:pointer;
+  box-shadow:var(--csk-shadow-1);
+  transition:transform .12s var(--csk-ease),border-color .18s,background .18s;
+}
+.lob-ready:hover{border-color:#ffb02e99;background:linear-gradient(180deg,#232f3c,#131c26);transform:translateY(-1px)}
+.lob-ready:active{transform:translateY(0) scale(.97)}
+.lob-ready.on{
+  background:linear-gradient(180deg,var(--csk-amber-soft),var(--csk-amber) 55%,var(--csk-amber-deep));
+  color:#1a0d00;border:1px solid #ffc968;
+  box-shadow:0 12px 28px -8px #ff8a1f77,inset 0 1px 0 #ffffffaa;
+}
+
+.lob-start{
+  font-family:var(--csk-font-display);font-weight:700;letter-spacing:.1em;
+  color:#1a0d00;
+  background:linear-gradient(180deg,var(--csk-amber-soft),var(--csk-amber) 55%,var(--csk-amber-deep));
+  border:1px solid #ffc968;
+  border-radius:var(--csk-radius-sm);
+  padding:12px 26px;cursor:pointer;
+  box-shadow:0 12px 28px -8px #ff8a1f77,inset 0 1px 0 #ffffffaa;
+  transition:transform .12s var(--csk-ease),filter .15s,opacity .18s;
+}
+.lob-start:hover:not(:disabled){transform:translateY(-2px);filter:brightness(1.04)}
+.lob-start:active:not(:disabled){transform:translateY(0) scale(.98)}
+.lob-start:disabled{opacity:.4;cursor:not-allowed;filter:grayscale(.3)}
+
+/* ---------- countdown ---------- */
+.lob-count{
+  position:fixed;inset:0;z-index:41;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  background:#04080cf0;
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+}
+.lob-count[hidden]{display:none}
+.lob-count-n{
+  font-family:var(--csk-font-display);font-weight:700;
+  font-size:min(22vw,140px);line-height:1;
+  background:linear-gradient(180deg,var(--csk-amber-soft),var(--csk-amber));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 10px 30px #ff8a1f55);
+}
+.lob-count-l{
+  font-family:var(--csk-font-display);font-weight:700;letter-spacing:.2em;
+  font-size:14px;color:var(--csk-text-dim);
+}
+
+/* ---------- dimmed Create Room button when logged out ---------- */
+#host.lob-locked-btn{opacity:.5;filter:grayscale(.4)}
