@@ -1,107 +1,125 @@
 /* ===========================================================
    CSK Visual Theme — Room Lobby
    Waiting-room overlay shown between Create/Join Room and the
-   actual match. Same rule as the other theme files: additive
-   only, no ids/classes the core game reads, loads after
-   game-core.css / home-base.css / theme-home.css / theme-hud.css.
+   actual match. Additive only: no ids/classes the core game
+   reads. Loads after game-core / home-base / theme-* files.
 
-   Scaling: matches every other in-game overlay (#kf,#sb,#bc,etc.
-   in home-base.css) by using zoom:var(--uis,1), which game.js
-   computes from the real viewport in rs(). This keeps the lobby
-   laid out exactly like the desktop version — same proportions,
-   same relative button/text sizes — just scaled down as one
-   unit to fit smaller screens, instead of reflowing piecemeal.
+   Fit-to-screen strategy (no zoom, no fixed px layout):
+   - #lob is exactly the visible viewport (100dvh, safe-areas).
+   - .lob-wrap sets ONE base font-size that follows the smaller
+     of viewport width/height; every size inside is in em, so the
+     whole panel scales as a unit like on a laptop.
+   - The seat grid takes the remaining height (flex:1, min-height:0)
+     and auto-fills columns, so all 20 seats are reachable and the
+     top bar + buttons are never pushed off-screen.
    =========================================================== */
 
 #lob{
-  position:fixed;inset:0;z-index:40;
+  position:fixed;left:0;top:0;right:0;
+  height:100%;height:100dvh;
+  z-index:40;
   display:flex;align-items:center;justify-content:center;
-  padding:16px;
-  padding-top:max(16px,env(safe-area-inset-top,0px));
-  padding-bottom:max(16px,env(safe-area-inset-bottom,0px));
+  padding:8px;
+  padding-top:max(8px,env(safe-area-inset-top,0px));
+  padding-bottom:max(8px,env(safe-area-inset-bottom,0px));
+  padding-left:max(8px,env(safe-area-inset-left,0px));
+  padding-right:max(8px,env(safe-area-inset-right,0px));
   background:
     radial-gradient(900px 540px at 50% 20%,#1c2a3a66 0%,transparent 60%),
     #04080cd9;
   backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
   font-family:var(--csk-font-body);
   box-sizing:border-box;
+  overflow:hidden;
 }
 #lob[hidden]{display:none}
 #lob *{box-sizing:border-box}
 
 .lob-wrap{
-  width:min(980px,96vw);
-  max-height:min(92vh,92dvh);
-  display:flex;flex-direction:column;gap:14px;
+  /* 1em = base unit; ~13px on laptop, shrinks on phones (never below 9.5px) */
+  font-size:clamp(9.5px,min(1.7vw,2.6vh),13px);
+  width:100%;max-width:980px;
+  max-height:100%;
+  min-height:0;
+  display:flex;flex-direction:column;gap:1em;
   background:linear-gradient(180deg,#141e28f2,#0b121af2);
   border:1px solid var(--csk-line-soft);
   box-shadow:var(--csk-shadow-2);
   border-radius:var(--csk-radius-lg);
-  padding:18px 20px 20px;
+  padding:1.2em 1.4em 1.4em;
   overflow:hidden;
-  zoom:var(--uis,1);
 }
 
 .lob-top{
-  display:flex;align-items:center;gap:12px;
+  display:flex;align-items:center;gap:.8em;
   flex-wrap:wrap;
+  flex:0 0 auto;
 }
 .lob-code{
   font-family:var(--csk-font-display);
-  font-weight:700;letter-spacing:.1em;
+  font-weight:700;letter-spacing:.1em;font-size:1.08em;
   color:var(--csk-text-dim);
   background:#0d141c;border:1px solid var(--csk-line);
   border-radius:var(--csk-radius-sm);
-  padding:8px 14px;cursor:pointer;
+  padding:.6em 1em;cursor:pointer;
   transition:border-color .18s,background .18s;
 }
-.lob-code b{color:var(--csk-amber);font-size:1.1em;letter-spacing:.14em;margin-left:4px}
+.lob-code b{color:var(--csk-amber);font-size:1.1em;letter-spacing:.14em;margin-left:.3em}
 .lob-code:hover{border-color:#ffb02e99;background:#131c26}
 
 .lob-cnt{
   font-family:var(--csk-font-display);
-  font-weight:600;letter-spacing:.06em;
+  font-weight:600;letter-spacing:.06em;font-size:1.04em;
   color:var(--csk-text);
   background:#ffffff0f;
   border-radius:var(--csk-radius-sm);
-  padding:8px 14px;
+  padding:.6em 1em;
   white-space:nowrap;
 }
 
 .lob-leave{
   margin-left:auto;
   font-family:var(--csk-font-display);
-  font-weight:700;letter-spacing:.1em;
+  font-weight:700;letter-spacing:.1em;font-size:1.04em;
   color:#ff9d8f;
   background:#2a1310;border:1px solid #6b2a22;
   border-radius:var(--csk-radius-sm);
-  padding:8px 16px;cursor:pointer;
+  padding:.6em 1.2em;cursor:pointer;
+  min-height:max(32px,2.5em);
   transition:transform .12s var(--csk-ease),border-color .18s,background .18s;
 }
 .lob-leave:hover{border-color:#ff4a3a99;background:#391712;transform:translateY(-1px)}
 .lob-leave:active{transform:translateY(0) scale(.97)}
 
+/* game-core.css has a global button{width:100%;margin-bottom:8px;padding:11px}
+   rule. Lobby buttons must size to their content, not stretch full width. */
+.lob-leave,.lob-ready,.lob-start{width:auto;margin:0;flex:0 0 auto}
+.lob-leave{margin-left:auto}
+
+/* ---------- seats: fill the remaining height, auto-fit columns ---------- */
 .lob-seats{
+  flex:1 1 auto;min-height:0;
   display:grid;
-  grid-template-columns:repeat(5,1fr);
-  gap:10px;
-  overflow-y:auto;
-  padding:2px 2px 4px;
+  grid-template-columns:repeat(auto-fill,minmax(7.2em,1fr));
+  grid-auto-rows:min-content;
+  align-content:start;
+  gap:.8em;
+  overflow-y:auto;overflow-x:hidden;
+  padding:.9em .3em .4em;   /* top room so HOST tag isn't clipped */
   -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
 }
-@media (max-width:760px){.lob-seats{grid-template-columns:repeat(4,1fr)}}
-@media (max-width:520px){.lob-seats{grid-template-columns:repeat(3,1fr)}}
 
 .lob-seat{
   position:relative;
-  aspect-ratio:1/1.08;
+  min-width:0;
+  min-height:7.6em;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:6px;
+  gap:.45em;
   border-radius:var(--csk-radius-md);
-  padding:8px 6px;
+  padding:.7em .5em;
   text-align:center;
   box-shadow:var(--csk-shadow-1);
-  min-width:0;
 }
 .lob-open{
   background:linear-gradient(180deg,#121c26,#0c141c);
@@ -111,8 +129,8 @@
 }
 .lob-open:hover{border-color:#ffb02e99;background:linear-gradient(180deg,#182330,#0f1820);transform:translateY(-2px)}
 .lob-open:active{transform:translateY(0) scale(.97)}
-.lob-plus{font-family:var(--csk-font-display);font-size:22px;color:var(--csk-text-dim);font-weight:700}
-.lob-open .lob-nm{color:var(--csk-text-dim);font-size:11px;letter-spacing:.04em}
+.lob-plus{font-family:var(--csk-font-display);font-size:1.7em;line-height:1;color:var(--csk-text-dim);font-weight:700}
+.lob-open .lob-nm{color:var(--csk-text-dim);letter-spacing:.04em;white-space:normal;text-align:center;line-height:1.15}
 
 .lob-filled{
   background:linear-gradient(180deg,#182330,#0e161e);
@@ -131,26 +149,26 @@
 }
 .lob-locked-inner{
   font-family:var(--csk-font-display);
-  font-weight:700;letter-spacing:.08em;font-size:10.5px;
+  font-weight:700;letter-spacing:.08em;font-size:max(8.5px,.8em);
   color:#4c5c68;
 }
 
 .lob-host-tag{
-  position:absolute;top:-8px;left:50%;transform:translateX(-50%);
+  position:absolute;top:-.65em;left:50%;transform:translateX(-50%);
   font-family:var(--csk-font-display);
-  font-size:9.5px;font-weight:700;letter-spacing:.14em;
+  font-size:max(8px,.74em);font-weight:700;letter-spacing:.12em;
   color:#2a0a05;
   background:linear-gradient(180deg,#ff6a52,#e8392a);
   border:1px solid #ff8a73;
   border-radius:999px;
-  padding:3px 10px;
+  padding:.25em .8em;
   box-shadow:0 4px 12px -2px #ff3a2a88,inset 0 1px 0 #ffffffaa;
   white-space:nowrap;
-  max-width:92%;overflow:hidden;text-overflow:ellipsis;
+  max-width:94%;overflow:hidden;text-overflow:ellipsis;
 }
 
 .lob-av{
-  width:46px;height:46px;border-radius:50%;
+  width:3.4em;height:3.4em;border-radius:50%;
   overflow:hidden;
   background:#0d141c;
   border:1px solid var(--csk-line-soft);
@@ -159,40 +177,44 @@
 }
 .lob-av img{width:100%;height:100%;object-fit:cover;display:block}
 .lob-ini{
-  font-family:var(--csk-font-display);font-weight:700;font-size:17px;
+  font-family:var(--csk-font-display);font-weight:700;font-size:1.3em;font-style:normal;
   color:var(--csk-amber-soft);
 }
 
 .lob-nm{
-  font-size:12px;font-weight:600;color:var(--csk-text);
+  font-size:max(10px,.95em);font-weight:600;color:var(--csk-text);
   max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
 .lob-nm small{color:var(--csk-text-dim);font-weight:400}
 
 .lob-st{
   font-family:var(--csk-font-display);
-  font-size:9.5px;font-weight:700;letter-spacing:.1em;
+  font-size:max(8.5px,.76em);font-weight:700;letter-spacing:.04em;
   color:var(--csk-text-dim);
+  white-space:normal;text-align:center;line-height:1.1;max-width:100%;
 }
 .lob-rdy .lob-st{color:var(--csk-amber)}
 
+/* ---------- bottom bar ---------- */
 .lob-bottom{
-  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
-  padding-top:6px;border-top:1px solid var(--csk-line-soft);
+  flex:0 0 auto;
+  display:flex;align-items:center;gap:.9em;flex-wrap:wrap;
+  padding-top:.7em;border-top:1px solid var(--csk-line-soft);
 }
 .lob-hint{
-  font-size:12px;color:var(--csk-text-dim);
-  flex:1 1 180px;
+  font-size:max(10px,.95em);color:var(--csk-text-dim);
+  flex:1 1 12em;
   min-width:0;
 }
 
 .lob-ready{
-  font-family:var(--csk-font-display);font-weight:700;letter-spacing:.1em;
+  font-family:var(--csk-font-display);font-weight:700;letter-spacing:.08em;font-size:1.04em;
   color:var(--csk-text);
   background:linear-gradient(180deg,#1c2733,#121a22);
   border:1px solid var(--csk-line-soft);
   border-radius:var(--csk-radius-sm);
-  padding:12px 22px;cursor:pointer;
+  padding:.8em 1.7em;cursor:pointer;
+  min-height:max(34px,2.7em);
   box-shadow:var(--csk-shadow-1);
   white-space:nowrap;
   transition:transform .12s var(--csk-ease),border-color .18s,background .18s;
@@ -206,12 +228,13 @@
 }
 
 .lob-start{
-  font-family:var(--csk-font-display);font-weight:700;letter-spacing:.1em;
+  font-family:var(--csk-font-display);font-weight:700;letter-spacing:.08em;font-size:1.04em;
   color:#1a0d00;
   background:linear-gradient(180deg,var(--csk-amber-soft),var(--csk-amber) 55%,var(--csk-amber-deep));
   border:1px solid #ffc968;
   border-radius:var(--csk-radius-sm);
-  padding:12px 26px;cursor:pointer;
+  padding:.8em 2em;cursor:pointer;
+  min-height:max(34px,2.7em);
   white-space:nowrap;
   box-shadow:0 12px 28px -8px #ff8a1f77,inset 0 1px 0 #ffffffaa;
   transition:transform .12s var(--csk-ease),filter .15s,opacity .18s;
@@ -219,28 +242,45 @@
 .lob-start:hover:not(:disabled){transform:translateY(-2px);filter:brightness(1.04)}
 .lob-start:active:not(:disabled){transform:translateY(0) scale(.98)}
 .lob-start:disabled{opacity:.4;cursor:not-allowed;filter:grayscale(.3)}
+.lob-ready[hidden],.lob-start[hidden]{display:none}
+
+/* very narrow phones: buttons share a row, hint goes below */
+@media (max-width:400px){
+  .lob-bottom .lob-ready,.lob-bottom .lob-start{flex:1 1 40%;padding-left:.8em;padding-right:.8em}
+  .lob-hint{order:3;flex:1 1 100%;text-align:center}
+}
+/* short landscape phones: tighter chrome so seats get the height */
+@media (max-height:480px){
+  .lob-wrap{gap:.6em;padding:.8em 1em 1em}
+  .lob-seat{min-height:6.4em;gap:.3em;padding:.5em .4em}
+  .lob-av{width:2.8em;height:2.8em}
+  .lob-seats{gap:.6em;padding-top:.8em;grid-template-columns:repeat(auto-fill,minmax(6em,1fr))}
+  .lob-seat.lob-locked{min-height:2.2em;padding:.3em}
+  .lob-bottom{padding-top:.5em}
+}
 
 /* ---------- countdown ---------- */
 .lob-count{
-  position:fixed;inset:0;z-index:41;
+  position:fixed;left:0;top:0;right:0;
+  height:100%;height:100dvh;
+  z-index:41;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
   background:#04080cf0;
   backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
-  padding:24px;
+  padding:16px;
   box-sizing:border-box;
-  zoom:var(--uis,1);
 }
 .lob-count[hidden]{display:none}
 .lob-count-n{
   font-family:var(--csk-font-display);font-weight:700;
-  font-size:min(22vw,140px);line-height:1;
+  font-size:min(22vw,26vh,140px);line-height:1;
   background:linear-gradient(180deg,var(--csk-amber-soft),var(--csk-amber));
   -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
   filter:drop-shadow(0 10px 30px #ff8a1f55);
 }
 .lob-count-l{
   font-family:var(--csk-font-display);font-weight:700;letter-spacing:.2em;
-  font-size:14px;color:var(--csk-text-dim);
+  font-size:clamp(11px,2.4vh,14px);color:var(--csk-text-dim);
   text-align:center;
 }
 
