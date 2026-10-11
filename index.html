@@ -54,6 +54,11 @@
 <img class="hs-bg" src="home-bg.jpg" alt="CSuperKnights - Clash of Super Kings" draggable="false" decoding="sync" fetchpriority="high">
 <div class="hs-ui">
  <button class="hs-btn hs-lit " id="stb" type="button" aria-label="Settings" style="--x:21;--y:13;--w:258;--h:87;--clip:polygon(5.814% 49.4253%,12.0155% 19.5402%,30.6202% 16.092%,93.4109% 16.092%,99.2248% 48.2759%,93.4109% 80.4598%,30.6202% 80.4598%,12.0155% 77.0115%)"><i class="face"></i><i class="fx"></i><span class="sr-only">Settings</span></button>
+ <button class="hs-fs" id="fsb" type="button" aria-label="Enter full screen" aria-pressed="false" title="Full screen" style="--rx:1612;--cy:55;--w:94;--h:90">
+  <svg class="fs-ic fs-ex" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5V4h5.5M14.5 4H20v5.5M20 14.5V20h-5.5M9.5 20H4v-5.5"/></svg>
+  <svg class="fs-ic fs-co" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 4v5.5H4M20 9.5h-5.5V4M14.5 20v-5.5H20M4 14.5h5.5V20"/></svg>
+</button>
+ 
  <div id="acc" data-s="guest" data-nudge="0">
   <input id="nm" class="hs-name" maxlength="12" placeholder="Name" autocomplete="off" spellcheck="false" aria-label="Callsign" style="--x:1722;--y:31;--w:172;--h:48">
   <button class="hs-btn hs-dim " id="acbtn" type="button" aria-label="Sign in with Google" style="--x:724;--y:401;--w:503;--h:66;--clip:polygon(4.7714% 10.6061%,95.4274% 10.6061%,97.4155% 25.7576%,97.4155% 77.2727%,95.4274% 90.9091%,4.7714% 90.9091%,2.7833% 77.2727%,2.7833% 25.7576%)"><i class="face"></i><i class="fx"></i><span class="hs-so" style="left:30.6163%;top:30.303%;width:50.0994%;height:43.9394%"><span id="acbl">SIGN IN WITH GOOGLE</span></span></button>
@@ -101,6 +106,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <!-- Game logic (unmodified, concatenated from the original inline scripts in original order) -->
 <script src="home-fx.js"></script>
+<script src="fullscreen.js"></script>
 <script src="game.js"></script>
 <!-- Room waiting lobby: additive layer, loads after game.js so it can call the game's own start() -->
 <script src="lobby.js"></script>

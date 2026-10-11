@@ -99,3 +99,46 @@
   body:has(#menu:not([style*="none"])) #rot{display:flex}
 }
 @media (prefers-reduced-motion:reduce){.hs-rip{animation-duration:.01s}.hs-btn .face{transition:none}}
+
+/* ---------- full-screen button (top, left of the profile plate) ---------- */
+#menu .hs .hs-fs{
+  /* The home art is stretched to the screen, so size from the smaller of the
+     stretched width/height to keep this button a true square at any aspect.
+     Anchored by its right edge (--rx) and vertical centre (--cy), art pixels. */
+  --side:min(calc(var(--w) / 1983 * 100cqw), calc(var(--h) / 793 * 100cqh));
+  position:absolute;
+  width:var(--side);height:var(--side);
+  right:calc((1983 - var(--rx)) / 1983 * 100%);
+  top:calc(var(--cy) / 793 * 100%);margin:calc(var(--side) / -2) 0 0 0;
+  padding:0;border:0;border-radius:0;background:none;box-sizing:border-box;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:#ffc24a;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;outline:0;
+  --oct:polygon(30% 0,70% 0,100% 30%,100% 70%,70% 100%,30% 100%,0 70%,0 30%);
+  filter:drop-shadow(0 calc(3 * var(--u)) calc(7 * var(--u)) #000b);
+  transition:transform .14s cubic-bezier(.2,.8,.2,1),filter .18s;
+}
+/* gold frame */
+#menu .hs .hs-fs::before{content:"";position:absolute;inset:0;
+  background:linear-gradient(155deg,#fff0b8 0%,#ffc24a 38%,#e08a12 70%,#8a4a00 100%);
+  clip-path:var(--oct);-webkit-clip-path:var(--oct)}
+/* dark plate inside the frame */
+#menu .hs .hs-fs::after{content:"";position:absolute;inset:calc(5 * var(--u));
+  background:radial-gradient(circle at 50% 28%,#22385a 0%,#0e1829 62%,#070c15 100%);
+  clip-path:var(--oct);-webkit-clip-path:var(--oct)}
+#menu .hs .hs-fs .fs-ic{
+  position:relative;z-index:1;width:56%;height:56%;
+  fill:none;stroke:currentColor;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round;
+  filter:drop-shadow(0 0 calc(4 * var(--u)) #ffb02eaa);
+  transition:transform .18s cubic-bezier(.2,.8,.2,1)}
+#menu .hs .hs-fs .fs-co{display:none}
+#menu .hs .hs-fs.on .fs-ex{display:none}
+#menu .hs .hs-fs.on .fs-co{display:block}
+@media (hover:hover){
+  #menu .hs .hs-fs:hover{transform:scale(1.07);filter:drop-shadow(0 calc(3 * var(--u)) calc(7 * var(--u)) #000b) brightness(1.15)}
+  #menu .hs .hs-fs:hover .fs-ex{transform:scale(1.14)}
+  #menu .hs .hs-fs:hover .fs-co{transform:scale(.88)}
+}
+#menu .hs .hs-fs:active{transform:translateY(calc(2 * var(--u))) scale(.94);transition-duration:.06s}
+#menu .hs .hs-fs:focus-visible{outline:2px solid #ffd067;outline-offset:3px}
+#menu .hs .hs-fs[hidden]{display:none}

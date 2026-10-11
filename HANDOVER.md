@@ -276,3 +276,17 @@ Realtime Database/Auth SDK end-to-end — login, room create/join, seat selectio
 across two simulated clients, ready-gating, the 15s countdown, host-leave cleanup, and the
 handoff into the real match all passed. Worth a real-device smoke test once deployed, same as
 any other change to this project per the testing note above.
+
+---
+
+## Full-screen button + auto full-screen (added)
+
+- `index.html`: new `<button id="fsb" class="hs-fs">` inside `.hs-ui` (top, left of the profile plate).
+- `home-image.css`: `.hs-fs` styles (gold octagon, true square at any aspect, expand/collapse icons).
+- `fullscreen.js` (new, loaded after `home-fx.js`): toggles full screen from the button, keeps the icon in sync
+  (`fullscreenchange`), hides the button where the browser has no Fullscreen API (e.g. iPhone Safari), and
+  requests full screen **inside the click handler** of `#solo`, `#host`, `#join` (browsers require a real gesture).
+  - `#host` is skipped while it has `.lob-locked-btn` (signed out) or is disabled.
+  - `#join` is skipped until a 5-character room code is typed.
+  - On phones, also tries `screen.orientation.lock('landscape')` once full screen is on.
+- It does not touch game state; `game.js` / `lobby.js` are unchanged.
