@@ -29,10 +29,15 @@ function avatarHTML(p){
  return '<i class="lob-ini">'+initials(p.name)+'</i>'}
 
 /* ---------- rendering ---------- */
+/* painted seat frames in the artwork (px in the 1983x793 image): 5 columns x 4 rows, numbered 1-20 */
+const SX=[472,689,902,1115,1325],SW=[194,191,190,188,189],SY=[148,279,412,545],SH=[109,111,111,111];
+const ICON_LOCK='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+const ICON_CHECK='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+const allReady=()=>{const l=Object.values(roster);return l.length>0&&l.every(p=>p.ready||p.host)}; /* the host's START press is their "ready" */
 function render(){
  const wrap=$('lob-seats');if(!wrap)return;
  const occ=Object.keys(roster).length;
- $('lob-cnt').textContent=occ+' / '+MAXH+' players';
+ $('lob-cnt').textContent=occ+' / '+MAXH+' PLAYERS';
  const frag=document.createDocumentFragment();
  for(let i=0;i<SEATS;i++){
   const locked=i>=MAXH;
@@ -40,33 +45,36 @@ function render(){
   const p=pid?roster[pid]:null;
   const el=document.createElement('div');
   el.className='lob-seat'+(locked?' lob-locked':p?' lob-filled':' lob-open')+(p&&p.ready?' lob-rdy':'')+(pid===myId?' lob-me':'');
+  const c=i%5,r=(i/5)|0;
+  el.style.cssText='--x:'+SX[c]+';--y:'+SY[r]+';--w:'+SW[c]+';--h:'+SH[r];
   if(locked){
-   el.innerHTML='<div class="lob-locked-inner">LOCKED</div>';
+   el.innerHTML='<div class="lob-veil">'+ICON_LOCK+'</div><div class="lob-pill">LOCKED</div>';
   }else if(p){
-   el.innerHTML=(p.host?'<div class="lob-host-tag">HOST</div>':'')
-    +'<div class="lob-av">'+avatarHTML(p)+'</div>'
-    +'<div class="lob-nm">'+escapeHtml(p.name||'Player')+(pid===myId?' <small>(you)</small>':'')+'</div>'
-    +'<div class="lob-st">'+(p.ready?'READY':'NOT READY')+'</div>';
+   el.innerHTML='<div class="lob-glow"></div><div class="lob-av">'+avatarHTML(p)+'</div>'
+    +(p.host?'<div class="lob-host-tag">HOST</div>':'')
+    +(p.ready||p.host?'<div class="lob-ck">'+ICON_CHECK+'</div>':'')
+    +'<div class="lob-pill">'+escapeHtml(p.name||'Player')+(pid===myId?'<small>(you)</small>':'')+'</div>';
   }else{
-   el.innerHTML='<div class="lob-plus">+</div><div class="lob-nm">Open seat</div>';
+   el.innerHTML='<div class="lob-glow"></div><div class="lob-pill">OPEN SEAT</div>';
+   el.setAttribute('role','button');el.tabIndex=0;
    el.onclick=()=>takeSeat(i);
+   el.onkeydown=e=>{if(e.key=='Enter'||e.key==' '){e.preventDefault();takeSeat(i)}};
   }
   frag.appendChild(el)}
  wrap.innerHTML='';wrap.appendChild(frag);
- const rb=$('lob-ready');
- if(rb){rb.textContent=myReady?'NOT READY':'READY UP';rb.classList.toggle('on',!!myReady);rb.hidden=mySeat<0}
- const sb=$('lob-start');
- if(sb){
-  sb.hidden=!amHost;
-  const list=Object.values(roster);
-  const allReady=list.length>0&&list.every(p=>p.ready);
-  sb.disabled=!allReady;
- }
+ /* READY (players) / START (host) share the big gold button */
+ const rb=$('lob-ready'),sb=$('lob-start');
+ if(rb){
+  rb.hidden=amHost;
+  const lab=rb.querySelector('.lab');
+  rb.disabled=mySeat<0;
+  if(lab)lab.textContent=mySeat<0?'PICK A SEAT':(myReady?'NOT READY':'READY UP');
+  rb.classList.toggle('on',!!myReady&&mySeat>=0)}
+ if(sb){sb.hidden=!amHost;sb.disabled=!allReady()}
  const hint=$('lob-hint');
  if(hint){
-  if(amHost)hint.textContent=Object.values(roster).every(p=>p.ready)?'All players ready — you can start the match.':'Waiting for all players to ready up…';
-  else hint.textContent=mySeat<0?'Pick an open seat to join in.':(myReady?'Waiting for the host to start…':'Ready up when you\u2019re set.')
- }}
+  if(amHost)hint.textContent=allReady()?(occ>1?'ALL READY':'READY WHEN YOU ARE'):'WAITING FOR PLAYERS';
+  else hint.textContent=mySeat<0?'PICK A SEAT':(myReady?'WAITING FOR HOST':'PRESS READY')}}
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 
 /* ---------- Firebase wiring ---------- */

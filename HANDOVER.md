@@ -307,3 +307,22 @@ battery saver / "adaptive refresh" limits, and run in full screen.
 **Lobby (`theme-lobby.css`).** Seats are always a fixed 10 × 2 grid (same as PC), stretched to the visible
 height on short screens (`max-height:600px`) so all 20 seats show with no scrolling. Portrait phones get 5 × 4.
 Locked seats are the same size as the others on every device.
+
+---
+
+## Waiting room + loading screen artwork (latest change)
+
+Both screens are now full-screen artwork (1983x793, stretched to fill the screen like the home screen) with
+real, live elements laid over the painted ones. Positions are in artwork pixels (`--x --y --w --h`).
+
+- `lobby-bg.jpg` – waiting-room art. The placeholder text ("Player 01..20", "20 PLAYERS - GAME WILL START
+  SOON", "START") was painted out so live data can be drawn there. Original upload kept out of the project.
+- `loading-bg.jpg` – loading art with the painted "72%" bar fill removed; a real fill + % is drawn in the frame.
+- Seats: the 20 painted frames (5 x 4). Seats 1-8 playable, 9-20 shown locked. Seat positions live in
+  `SX/SW/SY/SH` at the top of the render section in `lobby.js`.
+- Status strip (room code, players, hint) sits where the painted subtitle was; tap the code to copy it.
+- EXIT = `#lob-leave`. The big gold button is `#lob-start` for the host and `#lob-ready` for everyone else.
+- Behaviour change: the host no longer has to press READY. START enables once every NON-host player is ready.
+- Loading bar: real checkpoints (`__cskProg(n)` between the script tags in `index.html`), creeps between them,
+  hits 100% on window load, then fades out. 7 s safety timeout so it can never block play.
+- The old lobby CSS (`.lob-wrap` etc.) was replaced; `theme-lobby.css` now also holds the loading-screen styles.

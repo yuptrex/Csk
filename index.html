@@ -21,29 +21,37 @@
 <link rel="stylesheet" href="theme-hud.css">
 <link rel="stylesheet" href="home-image.css">
 <link rel="stylesheet" href="theme-lobby.css">
+<link rel="preload" as="image" href="loading-bg.jpg" fetchpriority="high">
 <link rel="preload" as="image" href="home-bg.jpg">
+<link rel="prefetch" as="image" href="lobby-bg.jpg">
 </head><body>
 <!-- Loading splash: covers first paint while fonts/Firebase/game script initialize.
      Pure presentation — does not touch any game state or element the game script uses. -->
 <div id="csk-splash" aria-hidden="true">
-  <div class="csk-splash-mark"><svg viewBox="0 0 48 48"><use href="icons.svg#ic-shield"/></svg></div>
-  <div class="csk-splash-label">Loading arena…</div>
-  <div class="csk-splash-bar"><i></i></div>
+  <img class="sp-bg" src="loading-bg.jpg" alt="" draggable="false" decoding="sync" fetchpriority="high">
+  <div class="sp-ui">
+    <div class="sp-track"><div class="sp-fill" id="sp-fill"></div><div class="sp-pct" id="sp-pct">0%</div></div>
+  </div>
 </div>
 <script>
+/* Loading screen progress: real checkpoints are reported by __cskProg(n) between the big script loads below;
+   in between, the bar creeps forward so it never looks frozen. It reaches 100% on window "load", then fades out.
+   It can never block play: a hard safety timeout closes it even if "load" never fires. */
 (function(){
-  var MIN_MS = 500; // avoid a flash-of-splash on fast connections, but never block the game
-  var start = Date.now();
-  function hide(){
-    var el = document.getElementById('csk-splash');
-    if (!el) return;
-    var wait = Math.max(0, MIN_MS - (Date.now() - start));
-    setTimeout(function(){ el.classList.add('csk-hide'); }, wait);
-  }
-  if (document.readyState === 'complete') hide();
-  else window.addEventListener('load', hide);
-  // Safety net: never let the splash block play if "load" is slow to fire (e.g. a blocked third-party script)
-  setTimeout(hide, 4000);
+  var t0=Date.now(),MIN_MS=900,target=0,shown=0,closing=0,fill=document.getElementById('sp-fill'),pct=document.getElementById('sp-pct'),el=document.getElementById('csk-splash');
+  function paint(){var p=Math.round(shown);fill.style.width=shown+'%';pct.textContent=p+'%'}
+  window.__cskProg=function(n){if(n>target)target=Math.min(n,99)};
+  var iv=setInterval(function(){
+    var age=Date.now()-t0;
+    if(!closing){var creep=Math.min(88,age/45);if(creep>target)target=Math.max(target,Math.min(creep,target+.6))}
+    var goal=closing?100:target;
+    shown+=(goal-shown)*.14+(goal>shown?.12:0);if(shown>goal)shown=goal;
+    paint();
+    if(closing&&shown>=99.6&&age>=MIN_MS){clearInterval(iv);shown=100;paint();setTimeout(function(){el.classList.add('csk-hide')},260)}
+  },33);
+  function finish(){closing=1}
+  if(document.readyState==='complete')finish();else window.addEventListener('load',finish);
+  setTimeout(finish,7000);  /* safety net */
 })();
 </script>
 <canvas id="c"></canvas><div id="kf"></div><div id="sb" hidden></div><div id="bc"></div><div id="msg"></div><div id="rc" hidden title="Tap to copy"></div><button id="home" hidden>BACK TO HOME</button><div id="rot"><div class="ph"></div>Rotate your phone to landscape to play</div>
@@ -76,18 +84,19 @@
 <!-- Room waiting lobby: shown after Create Room / Join Room, before the match actually starts.
      Pure additive overlay — does not touch any id/class the core game script reads. The match
      itself is still started by calling the original start(mode, room) once the host hits GO. -->
-<div id="lob" hidden role="dialog" aria-modal="true" aria-label="Room lobby">
-  <div class="lob-wrap">
-    <div class="lob-top">
-      <div class="lob-code" id="lob-code" title="Tap to copy">ROOM <b></b></div>
-      <div class="lob-cnt" id="lob-cnt">0 / 8 players</div>
-      <button class="lob-leave" id="lob-leave" type="button">LEAVE</button>
-    </div>
-    <div class="lob-seats" id="lob-seats"></div>
-    <div class="lob-bottom">
-      <button class="lob-ready" id="lob-ready" type="button">READY</button>
-      <button class="lob-start" id="lob-start" type="button" hidden disabled>START MATCH</button>
-      <div class="lob-hint" id="lob-hint"></div>
+<div id="lob" hidden role="dialog" aria-modal="true" aria-label="Waiting room">
+  <div class="lob-stage">
+    <img class="lob-bg" src="lobby-bg.jpg" alt="Waiting room" draggable="false" decoding="sync">
+    <div class="lob-ui">
+      <div class="lob-abs lob-sub" style="--x:700;--y:98;--w:583;--h:30">
+        <button class="lob-code" id="lob-code" type="button" title="Tap to copy">ROOM <b></b></button>
+        <i class="d">&#9670;</i><span id="lob-cnt">0 / 8 PLAYERS</span>
+        <i class="d">&#9670;</i><span id="lob-hint"></span>
+      </div>
+      <button class="lob-abs lob-btn lob-leave" id="lob-leave" type="button" aria-label="Exit room" style="--x:1767;--y:22;--w:187;--h:64"><i class="face"></i></button>
+      <div class="lob-seats" id="lob-seats"></div>
+      <button class="lob-abs lob-btn lob-go" id="lob-ready" type="button" style="--x:788;--y:672;--w:404;--h:80"><i class="face"></i><span class="lab">READY UP</span></button>
+      <button class="lob-abs lob-btn lob-go" id="lob-start" type="button" hidden disabled style="--x:788;--y:672;--w:404;--h:80"><i class="face"></i><span class="lab"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l7.5 7.5-1.6 1.6L3 6.2zM21 3v3.2l-5.9 5.9-1.6-1.6zM12.6 12.4l1.6 1.6-2 2 1.6 1.6-1.4 1.4-1.6-1.6-2.3 2.3-1.2-1.2 2.3-2.3-1.6-1.6 1.4-1.4 1.6 1.6zM15 13l4.5 4.5-1.2 1.2-2.3-2.3-1.6 1.6-1.4-1.4 1.6-1.6L12.8 13.9z"/></svg>START</span></button>
     </div>
   </div>
   <div class="lob-count" id="lob-count" hidden>
@@ -100,14 +109,20 @@
 
 <!-- Sound bank (large, kept as its own file to keep index.html light) -->
 <script src="sfx-data.js"></script>
+<script>window.__cskProg&&__cskProg(45)</script>
 <!-- Firebase (multiplayer backend) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script>window.__cskProg&&__cskProg(58)</script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>window.__cskProg&&__cskProg(68)</script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script>window.__cskProg&&__cskProg(78)</script>
 <!-- Game logic (unmodified, concatenated from the original inline scripts in original order) -->
 <script src="home-fx.js"></script>
 <script src="fullscreen.js"></script>
 <script src="game.js"></script>
+<script>window.__cskProg&&__cskProg(92)</script>
 <!-- Room waiting lobby: additive layer, loads after game.js so it can call the game's own start() -->
 <script src="lobby.js"></script>
+<script>window.__cskProg&&__cskProg(97)</script>
 </body></html>
