@@ -1465,9 +1465,9 @@ setTimeout(()=>{const b=$('acbtn');if(b)b.onclick=()=>(user||hint)?signOut():sig
  document.addEventListener('visibilitychange',()=>{if(document.hidden)push()});addEventListener('pagehide',()=>{pushLayout();push()})},0);
 })();
 
-/* v2: profile, stats, settings, minimap, fps */
+/* v2: profile, stats, settings, fps */
 (function(){const g=id=>document.getElementById(id),ls=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k));localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
-const set=Object.assign({vol:90,mm:true,dn:true,fps:false},ls('ar-set')||{});
+const set=Object.assign({vol:90,dn:true,fps:false},ls('ar-set')||{});
 let st=Object.assign({k:0,d:0,w:0,m:0,bs:0},Object.fromEntries(AR_XK.map(x=>[x,0])),(ARA.hint()?ls('ar-stats'):null)||{});   /* progress is only kept for signed-in players */
 const GNAME={pistol:'Pistol',smg:'SMG',shotgun:'Shotgun',rifle:'Rifle',blaster:'Blaster'};
 function showAcc(){const b=g('accb');if(!b)return;if(!ARA.hint()){b.hidden=true;return}b.hidden=false;let S=0,H=0,rows='';
@@ -1479,7 +1479,7 @@ const _oe=onEv;onEv=function(e){try{if(e.k=='kill'){if(e.ai==myId&&e.bi!=myId){s
   else if(e.k=='acc'&&e.id==myId&&e.a){for(const w in e.a){if(!GNAME[w])continue;st['s_'+w]=(st['s_'+w]||0)+(e.a[w][0]|0);st['h_'+w]=(st['h_'+w]||0)+(e.a[w][1]|0)}ARA.saveStats(st);showAcc()}}catch(x){}return _oe.apply(this,arguments)};
 const hs=[8,35,55,130,175,210,265,320];let sh=ls('ar-hue');if(sh!=null)myHue=sh;
 hs.forEach(h=>{const b=document.createElement('button');b.className='s'+(h==sh?' on':'');b.style.background='hsl('+h+' 85% 58%)';b.setAttribute('aria-label','Colour '+h);b.onclick=()=>{myHue=h;ls('ar-hue',h);ARA.profile();[...(g('sw')?g('sw').children:[])].forEach(c=>c.classList.toggle('on',c==b))};g('sw')&&g('sw').appendChild(b)});
-const lab={mm:'Minimap',dn:'Damage numbers',fps:'FPS counter'};
+const lab={dn:'Damage numbers',fps:'FPS counter'};
 function apply(){window.AR_DMG=set.dn;g('vv').textContent=set.vol+'%';g('vol').value=set.vol;try{if(MG)MG.gain.value=set.vol/100}catch(e){}
  document.querySelectorAll('#st .tg').forEach(b=>b.setAttribute('aria-pressed',set[b.dataset.k]?'true':'false'));g('fps').style.display=set.fps?'block':'none';ls('ar-set',set)}
 const _ai=audioInit;audioInit=function(){const r=_ai.apply(this,arguments);apply();return r};
@@ -1490,13 +1490,8 @@ const pb=document.querySelector('#pm .box');if(pb){pb.insertAdjacentHTML('before
 apply();
 const tips=['Press B to drop a bomb, press B again to detonate it.','Press Q to fire a grapple rope: hit a wall to zip across, hit an enemy to drag them in.','Dash with Shift to dodge incoming fire.','Spend coins on weapon upgrades with 1-4.','Hold Tab to see the full scoreboard.','Bombs go dead when they leave your screen, so keep them in view.'];let ti=Math.random()*tips.length|0;const tp=g('tip');
 function tip(){tp.style.opacity=0;setTimeout(()=>{tp.textContent='Tip: '+tips[ti++%tips.length];tp.style.opacity=1},300)}tip();setInterval(tip,6000);
-const mm=g('mm'),mc=mm.getContext('2d'),fp=g('fps');let fr=0,ft=performance.now(),lm=0;
+const fp=g('fps');let fr=0,ft=performance.now();
 (function loop(t){fr++;if(t-ft>=1000){fp.textContent=fr+' FPS'+(PERF.ti?' \u00b7 res '+Math.round(rScale*100)+'%':'');fr=0;ft=t}
- if(t-lm>66){lm=t;const on=set.mm&&g('menu').style.display=='none'&&innerHeight>=480&&snap&&snap.p&&snap.p.length;mm.style.display=on?'block':'none';
-  if(on){const W=160,H=107,sx=W/MW,sy=H/MH;mc.clearRect(0,0,W,H);mc.fillStyle='rgba(11,17,23,.8)';mc.fillRect(0,0,W,H);mc.fillStyle='#41546350';
-   for(const w of WALLS)mc.fillRect(w[0]*sx,w[1]*sy,Math.max(1.5,w[2]*sx),Math.max(1.5,w[3]*sy));
-   for(const q of snap.p){if(!q.al)continue;const me=q.id==myId;mc.fillStyle='hsl('+q.hue+' 85% 60%)';mc.beginPath();mc.arc(q.x*sx,q.y*sy,me?3.4:2.2,0,6.28);mc.fill();if(me){mc.strokeStyle='#fff';mc.lineWidth=1.2;mc.stroke()}}
-   mc.strokeStyle='#ffffff66';mc.lineWidth=1;mc.strokeRect((cam.x-innerWidth/S/2)*sx,(cam.y-innerHeight/S/2)*sy,innerWidth/S*sx,innerHeight/S*sy)}}
  requestAnimationFrame(loop)})(performance.now());
 })();
 /* in-game home scene: real in-game characters, names, terrain and pickups drawn on the game canvas */

@@ -20,7 +20,7 @@ const $=id=>document.getElementById(id);
 const SEATS=20;
 const KICK_COOL=120000;   /* a removed player must wait this long before joining that room again */
 let lobRoot=null,lobRef=null,startRef=null,kickRef=null,mySeat=-1,myReady=0,amHost=0,code='',roster={},
-    countdownT=null,enteredMatch=0,nameT=null,kickArm='',kickArmT=null,tOff=0;
+    countdownT=null,enteredMatch=0,nameT=null,tOff=0;
 const LOAD=()=>window.CSKLoad||{show(){},hide(){},around:f=>f()};
 
 /* Name shown in the lobby = the player's callsign (the permanent in-game name chosen at login) and nothing else.
@@ -93,13 +93,10 @@ function render(){
     +(p.ready||p.host?'<div class="lob-ck">'+ICON_CHECK+'</div>':'')
     +'<div class="lob-pill">'+escapeHtml(p.name||'Player')+(pid===myId?'<small>(you)</small>':'')+'</div>';
    if(amHost&&pid!==myId&&!countdownT){
-    const kb=document.createElement('button');
-    kb.type='button';kb.className='lob-kick'+(kickArm===pid?' arm':'');
-    kb.setAttribute('aria-label','Remove '+(p.name||'player')+' from the room');
-    kb.title='Remove from room';
-    kb.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg><span>KICK?</span>';
-    kb.onclick=e=>{e.stopPropagation();kickClick(pid)};
-    el.appendChild(kb)}
+    el.classList.add('lob-pick');el.setAttribute('role','button');el.tabIndex=0;
+    el.setAttribute('aria-label',(p.name||'Player')+': options');
+    el.onclick=e=>{e.stopPropagation();openPop(pid)};
+    el.onkeydown=e=>{if(e.key=='Enter'||e.key==' '){e.preventDefault();openPop(pid)}}}
   }else{
    el.innerHTML='<div class="lob-glow"></div><div class="lob-pill">OPEN SEAT</div>';
    el.setAttribute('role','button');el.tabIndex=0;
@@ -108,6 +105,7 @@ function render(){
   }
   frag.appendChild(el)}
  wrap.innerHTML='';wrap.appendChild(frag);
+ if(popPid)placePop();
  /* READY (players) / START (host) share the big gold button */
  const rb=$('lob-ready'),sb=$('lob-start');
  if(rb){
@@ -121,21 +119,31 @@ function render(){
  if(hint){
   if(amHost)hint.textContent=occ<2?'WAITING FOR PLAYERS':(allReady()?'ALL READY':'WAITING FOR READY');
   else hint.textContent=mySeat<0?'PICK A SEAT':(myReady?'WAITING FOR HOST':'PRESS READY')}}
-/* two taps to remove someone: the first arms the button ("KICK?"), the second confirms. It disarms itself after 3 s. */
-function kickClick(pid){
+/* Host taps another player's seat -> small popup with "KICK OUT". Tap anywhere else / Esc to dismiss. */
+let popPid='';
+function closePop(){popPid='';const o=$('lob-pop');if(o)o.hidden=true}
+function openPop(pid){
  if(!amHost||!roster[pid]||pid===myId||countdownT)return;
- sfx&&sfx('ui',{j:0});
- if(kickArm!==pid){kickArm=pid;clearTimeout(kickArmT);kickArmT=setTimeout(()=>{kickArm='';render()},3000);render();return}
- clearTimeout(kickArmT);kickArm='';
+ sfx&&sfx('ui',{j:0});popPid=pid;placePop()}
+function placePop(){
+ const o=$('lob-pop');if(!o)return;
+ const p=roster[popPid];
+ if(!p||!amHost||countdownT){closePop();return}
+ const i=p.seat,c=i%5,r=(i/5)|0,cx=SX[c]+SW[c]/2,W=176;
+ o.style.cssText='--x:'+Math.round(cx-W/2)+';--y:'+(SY[r]+SH[r]-14)+';--w:'+W+';--h:78';
+ $('lob-pop-n').textContent=p.name||'Player';
+ o.hidden=false}
+function doKick(pid){
+ if(!amHost||!roster[pid]||pid===myId||countdownT)return;
  const p=roster[pid],ts=firebase.database.ServerValue.TIMESTAMP,up={};
+ closePop();
  [p.dk,p.uk].forEach(k=>{if(k)up[k]=ts});
  if(!Object.keys(up).length)up['x'+pid]=ts;
  /* record first, then drop the seat, so the removed client always sees the kick */
  FBdb.ref('rooms/'+code+'/kick').update(up)
   .then(()=>lobRoot.child(pid).remove())
   .then(()=>netNote((p.name||'Player')+' was removed from the room.',0))
-  .catch(()=>netNote('Could not remove that player. Try again.',1));
- render()}
+  .catch(()=>netNote('Could not remove that player. Try again.',1))}
 /* this client was removed by the host */
 function onKicked(){
  const rc=code;
@@ -194,7 +202,7 @@ function detachRoom(){
  try{if(lobRoot)lobRoot.off()}catch(e){}
  try{if(startRef)startRef.off()}catch(e){}
  try{if(kickRef)kickRef.off()}catch(e){}
- clearInterval(nameT);nameT=null;clearTimeout(kickArmT);kickArm='';
+ clearInterval(nameT);nameT=null;closePop();
  if(amHost){
   /* the host leaving closes the room for everyone, same as the host disconnecting mid-match elsewhere */
   try{FBdb.ref('rooms/'+code).remove()}catch(e){}
@@ -219,7 +227,8 @@ function beginCountdown(){
  const cnt=$('lob-count'),n=$('lob-count-n');
  if(!cnt||!n)return;
  cnt.hidden=false;
- let left=15;n.textContent=left;kickArm='';
+ const fh=$('lob-count-fs');if(fh)fh.hidden=!!(window.CSKFullscreen&&CSKFullscreen.isFs());
+ let left=15;n.textContent=left;closePop();
  clearInterval(countdownT);
  countdownT=setInterval(()=>{
   left--;
@@ -229,6 +238,7 @@ function enterMatch(){
  if(enteredMatch)return;enteredMatch=1;
  const L=LOAD(),host=amHost,rc=code;
  L.show();
+ try{window.CSKFullscreen&&CSKFullscreen.enter()}catch(e){}   /* works if the browser still counts a recent tap; READY/START already asked */
  try{if(lobRoot)lobRoot.off()}catch(e){}
  try{if(startRef)startRef.off()}catch(e){}
  try{if(kickRef)kickRef.off()}catch(e){}
@@ -293,6 +303,9 @@ function wire(){
   syncHostLock()}
  /* Play Solo: game.js handles the click itself; we only put the loading screen over the switch (capture phase = runs first) */
  const so=$('solo');if(so)so.addEventListener('click',()=>{const L=LOAD();L.show();setTimeout(()=>L.hide(),60)},true);
+ const pk=$('lob-pop-kick');if(pk)pk.onclick=e=>{e.stopPropagation();doKick(popPid)};
+ document.addEventListener('pointerdown',e=>{if(popPid&&!e.target.closest('#lob-pop,.lob-pick'))closePop()},true);
+ document.addEventListener('keydown',e=>{if(e.key=='Escape'&&popPid)closePop()});
  const lv=$('lob-leave');if(lv)lv.onclick=()=>{sfx&&sfx('ui',{j:0});leaveLobby()};
  const rb=$('lob-ready');if(rb)rb.onclick=()=>{sfx&&sfx('ui',{j:0});toggleReady()};
  const sb=$('lob-start');if(sb)sb.onclick=()=>{if(sb.disabled)return;sfx&&sfx('ui',{j:0});if(startRef)startRef.set(Date.now()).catch(()=>{})};

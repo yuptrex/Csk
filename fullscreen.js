@@ -53,6 +53,10 @@
     el.addEventListener('click',function(){ if(!ok||ok(el)) enter(); },true);
   }
   hook('solo');
+  /* waiting room: READY / START / the countdown overlay are real taps too, so full screen is requested there as well
+     (the 15 s countdown itself is not a tap, so it can't ask) */
+  hook('lob-ready');hook('lob-start');hook('lob-count');
+  window.CSKFullscreen={enter:enter,isFs:isFs};
   /* Create Room: skip when signed-out/locked or busy (the click will just be rejected) */
   hook('host',function(el){ return !el.disabled&&!el.classList.contains('lob-locked-btn'); });
   /* Join: only when a 5-character room code has been typed */

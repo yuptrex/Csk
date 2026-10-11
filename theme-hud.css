@@ -88,12 +88,7 @@
 }
 #ep input[type=range]{accent-color:var(--csk-amber)}
 
-/* ---------- minimap frame / fps / pause button / room code / toast ---------- */
-#mm{
-  border:1px solid var(--csk-line-soft);
-  box-shadow:var(--csk-shadow-1);
-  border-radius:12px;
-}
+/* ---------- fps / pause button / room code / toast ---------- */
 #fps{
   font-family:ui-monospace,Menlo,Consolas,monospace;
   color:var(--csk-amber);

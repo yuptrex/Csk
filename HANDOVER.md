@@ -354,3 +354,18 @@ and a hard guarantee would need rules too.
 (`ARA.callsign()`), never the Google display name/email. Only the profile photo comes from Google.
 
 Tested with a mocked Firebase (two simulated clients): 34/34 checks. Not yet tested against live Firebase.
+
+---
+
+## Minimap removed, kick popup, waiting-room scenery, full screen at match start
+
+- **Minimap removed entirely:** `<canvas id="mm">`, its settings row, its CSS, its draw code and the `mm` setting in game.js.
+- **Kick = tap a profile.** The host taps another player's seat -> small popup (name + KICK OUT). Tap elsewhere / Esc closes it.
+  Popup code is in lobby.js (`openPop` / `placePop` / `doKick`), styles `.lob-pop` in theme-lobby.css. The 120 s lockout is unchanged.
+- **PC scenery (`lobby-fx.js`, `.fx-*` in theme-lobby.css):** knights marching along the bottom in 3 depth layers (far = small and
+  heavily blurred, mid = softly blurred, near = sharp + glow), drifting fog, rising embers, bottom haze. Only on desktop
+  (`hover:hover`, fine pointer, width >= 900px) and not with reduced-motion. Edit the `plan` array in lobby-fx.js to change knights.
+- **Full screen at match start:** browsers only allow it from a tap, and the 15 s countdown is not one. So full screen is now requested
+  on READY, START and a tap on the countdown overlay (fullscreen.js `CSKFullscreen`), plus once more when the match begins.
+  If the browser is still windowed, the countdown shows "Tap anywhere for full screen".
+  iPhone Safari has no Fullscreen API, so it cannot do this there.

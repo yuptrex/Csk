@@ -161,17 +161,67 @@
   font-size:calc(var(--u) * 26);-webkit-text-stroke:calc(var(--u) * 3) #3a2200;paint-order:stroke fill;text-shadow:0 1px 3px #000a}
 /* the splash needs --u for the tip font size too (it already defines it on .sp-ui) */
 
-/* ---------------------------------------------------------- host: remove-player button on a seat */
-.lob-kick{position:absolute;left:2%;top:38%;z-index:3;display:flex;width:auto;max-width:90%;align-items:center;justify-content:center;gap:.35em;
-  min-width:calc(var(--u) * 26);height:calc(var(--u) * 26);padding:0 calc(var(--u) * 7);margin:0;margin-bottom:0;cursor:pointer;
-  font-family:var(--csk-font-display);font-weight:700;font-size:calc(var(--u) * 12);letter-spacing:.08em;line-height:1;color:#ffd9d4;
-  background:linear-gradient(180deg,#3a1411ee,#1d0907ee);border:1px solid #ff6a5299;border-radius:999px;
-  box-shadow:0 2px 8px -2px #000c;-webkit-tap-highlight-color:transparent;touch-action:manipulation;
-  transition:background .12s,transform .08s,box-shadow .12s}
-.lob-kick svg{width:calc(var(--u) * 12);height:calc(var(--u) * 12);stroke:currentColor;fill:none;stroke-width:3;stroke-linecap:round}
-.lob-kick span{display:none}
-.lob-kick:hover{background:linear-gradient(180deg,#7a241c,#43120d);box-shadow:0 0 calc(var(--u) * 10) #ff3a2a88}
-.lob-kick:active{transform:scale(.94)}
-.lob-kick.arm{background:linear-gradient(180deg,#ff6a52,#d8321f);border-color:#ffb1a3;color:#fff;box-shadow:0 0 calc(var(--u) * 12) #ff3a2acc}
-.lob-kick.arm span{display:inline}
-.lob-kick:focus-visible{outline:2px solid #ffd067;outline-offset:2px}
+/* ---------------------------------------------------------- host: tap a player -> small popup with KICK OUT */
+.lob-pick{cursor:pointer}
+@media (hover:hover){.lob-pick:hover .lob-glow{opacity:1}}
+.lob-pop{z-index:6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(var(--u) * 7);
+  padding:calc(var(--u) * 8);border-radius:calc(var(--u) * 10);
+  background:linear-gradient(180deg,#101c33f2,#070d1af2);border:1px solid #ffd067aa;
+  box-shadow:0 10px 28px -6px #000,0 0 calc(var(--u) * 16) #2a6cff55;
+  animation:lobPop .16s cubic-bezier(.2,.9,.3,1.2) both;transform-origin:50% 0}
+.lob-pop[hidden]{display:none}
+.lob-pop::before{content:"";position:absolute;left:50%;top:calc(var(--u) * -6);width:calc(var(--u) * 10);height:calc(var(--u) * 10);
+  margin-left:calc(var(--u) * -5);transform:rotate(45deg);background:#101c33;border-left:1px solid #ffd067aa;border-top:1px solid #ffd067aa}
+.lob-pop b{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff;font-weight:700;letter-spacing:.04em;
+  font-size:calc(var(--u) * 15);line-height:1}
+.lob-pop button{width:100%;margin:0;padding:0;height:calc(var(--u) * 30);cursor:pointer;border:1px solid #ff9a8a;border-radius:calc(var(--u) * 7);
+  font-family:var(--csk-font-display);font-weight:700;letter-spacing:.12em;font-size:calc(var(--u) * 14);color:#fff;
+  background:linear-gradient(180deg,#ff6a52,#d8321f);box-shadow:0 0 calc(var(--u) * 10) #ff3a2a77;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.lob-pop button:hover{filter:brightness(1.12)}
+.lob-pop button:active{transform:scale(.96)}
+.lob-pop button:focus-visible{outline:2px solid #ffd067;outline-offset:2px}
+@keyframes lobPop{from{opacity:0;transform:translateY(-6px) scale(.92)}to{opacity:1;transform:none}}
+
+/* countdown: full-screen hint when the browser is still windowed (the countdown itself can't request it, a tap can) */
+.lob-count-fs{margin-top:6px;padding:.5em 1.1em;border:1px solid #ffd06788;border-radius:999px;color:#ffe6a8;background:#0007;
+  font-family:var(--csk-font-display);font-weight:700;letter-spacing:.12em;font-size:clamp(11px,2.4vh,15px);animation:fsPulse 1.6s ease-in-out infinite}
+.lob-count-fs[hidden]{display:none}
+@keyframes fsPulse{50%{box-shadow:0 0 18px #ffb02e88}}
+.lob-count{cursor:pointer}
+
+/* ---------------------------------------------------------- waiting-room scenery (PC): knights, fog, embers */
+.lob-fx{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.lob-fx>*{position:absolute}
+.fx-fog{left:-20%;width:140%;bottom:-6%;height:34%;filter:blur(26px);opacity:.55;
+  background:radial-gradient(ellipse at 30% 60%,#5b8cff55,transparent 60%),radial-gradient(ellipse at 70% 70%,#ff8a3d44,transparent 62%);
+  animation:fxDrift 26s ease-in-out infinite alternate}
+.fx-fog.f2{bottom:-10%;height:28%;opacity:.45;animation-duration:34s;animation-direction:alternate-reverse}
+@keyframes fxDrift{from{transform:translateX(-6%)}to{transform:translateX(6%)}}
+/* a knight = lane (travels) > face (flips for right-to-left) > svg (bobs, legs swing) */
+.fx-k{left:0;bottom:calc(var(--b) + 2.5%);height:20cqh;aspect-ratio:64 / 112;will-change:transform;
+  animation:fxMarch var(--d) linear infinite;animation-delay:var(--dl)}
+.fx-k.rev{animation-direction:reverse}
+@keyframes fxMarch{from{transform:translateX(-14cqw)}to{transform:translateX(112cqw)}}
+.fx-face{position:absolute;inset:0}
+.fx-k.rev .fx-face{transform:scaleX(-1)}
+.fx-k svg{width:100%;height:100%;overflow:visible;animation:fxBob .56s ease-in-out infinite}
+.fx-k .k-leg{transform-box:fill-box;transform-origin:50% 0;animation:fxLeg .56s ease-in-out infinite alternate}
+.fx-k .kr{animation-direction:alternate-reverse}
+.fx-k .k-sword{transform-box:fill-box;transform-origin:50% 100%;animation:fxSword 1.12s ease-in-out infinite}
+@keyframes fxBob{50%{transform:translateY(-3.5%)}}
+@keyframes fxLeg{from{transform:rotate(-24deg)}to{transform:rotate(24deg)}}
+@keyframes fxSword{50%{transform:rotate(-14deg)}}
+.fx-shadow{left:8%;right:-6%;bottom:-3%;height:8%;border-radius:50%;background:#000;filter:blur(5px);opacity:.55}
+/* depth: far = small, dim, very blurry; mid = softly blurred; near = sharp, big, coloured glow */
+.fx-k.far{height:15cqh;opacity:.8;filter:blur(3.4px) brightness(.8) saturate(1)}
+.fx-k.mid{height:21cqh;filter:blur(1.6px) brightness(1)}
+.fx-k.near{height:29cqh;filter:brightness(1.12) drop-shadow(0 0 12px #ffffff33) drop-shadow(0 6px 10px #000c)}
+.fx-ember{bottom:-2%;left:var(--x);width:var(--s);height:var(--s);border-radius:50%;background:#ffc15a;
+  box-shadow:0 0 8px 2px #ff9a2e;filter:blur(.8px);opacity:0;animation:fxEmber var(--t) linear infinite;animation-delay:var(--dl)}
+@keyframes fxEmber{0%{opacity:0;transform:translate(0,0)}12%{opacity:.9}100%{opacity:0;transform:translate(var(--dx),-62cqh)}}
+/* soft vignette + blur toward the very bottom so the scene melts into the art */
+.fx-haze{left:0;right:0;bottom:0;height:30%;background:linear-gradient(180deg,transparent,#04070dcc);
+  -webkit-backdrop-filter:blur(1.5px);backdrop-filter:blur(1.5px);
+  -webkit-mask-image:linear-gradient(180deg,transparent,#000 70%);mask-image:linear-gradient(180deg,transparent,#000 70%)}
+@media (prefers-reduced-motion:reduce){.lob-fx{display:none}}

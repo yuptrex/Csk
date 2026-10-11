@@ -71,7 +71,6 @@ h1{font-size:34px;letter-spacing:.16em;font-weight:800}.tag{margin:6px 0 0}
 .tip{text-align:center;font-size:11px;color:#8da0ad;margin-top:12px;min-height:28px;transition:opacity .3s}
 .box input[type=range]{padding:0;border:0;background:none;accent-color:var(--ac);height:28px;margin-bottom:10px}
 #st{position:fixed;inset:0;z-index:150;display:flex;align-items:center;justify-content:center;padding:16px;background:#04080ccc;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}#st[hidden]{display:none}#st .box{margin:0}#st h2{margin:0 0 16px;font-size:16px;letter-spacing:.2em;text-align:center}
-#mm{position:fixed;left:10px;top:64px;z-index:4;border:1px solid #2f4252;border-radius:8px;pointer-events:none;display:none}
 #fps{position:fixed;right:8px;bottom:2px;z-index:4;font:10px ui-monospace,Menlo,monospace;color:#8da0ad;opacity:.7;pointer-events:none;display:none}
 @media (max-height:520px){.box{padding:16px 18px 12px}.mark{display:none}.brand{margin-bottom:10px}h1{font-size:26px}.ctl{display:none}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
