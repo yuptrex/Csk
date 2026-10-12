@@ -396,7 +396,7 @@ Tested with a mocked Firebase (two simulated clients): 34/34 checks. Not yet tes
 P2P cannot connect for many mobile users (carrier-grade / symmetric NAT), and they silently fell back to Firebase in Singapore (200-300 ms).
 Tier order per client is now: **direct P2P -> in-region relay server -> Firebase**.
 
-- `server/relay.js` (+ `package.json`, `Dockerfile`, `fly.toml`, `DEPLOY.md`): a small Node WebSocket forwarder. Host is authoritative as before;
+- `relay-server.js` (+ `relay-package.json`, `relay.Dockerfile`, `relay-fly.toml`, `RELAY-DEPLOY.md`; all files in this project are flat, no folders): a small Node WebSocket forwarder. Host is authoritative as before;
   the relay only forwards (client->host, host->all clients) and caches the last world-data packet for late joiners. Deploy it in your players' country.
 - `rtc.js`: `WsRelay` client + 3-tier `HybridNet`. Configure `window.CSK_RELAY_URL` in `index.html` (or `?relay=wss://...`). The relay stays idle when P2P works.
 - The in-match readout now ends with the active path: `P2P`, `RELAY` or `SLOW` (Firebase). Use it to diagnose.

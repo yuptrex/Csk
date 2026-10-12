@@ -12,7 +12,7 @@
    'r'  ordered, reliable             world data ('wd') and 'bye'
 
  Tier 2 (rtc.js WsRelay): when peer-to-peer is impossible (strict mobile NAT) traffic goes through an in-region
-   WebSocket relay (server/relay.js) instead of Firebase. Set window.CSK_RELAY_URL='wss://...' (or open the page with ?relay=wss://...).
+   WebSocket relay (relay-server.js) instead of Firebase. Set window.CSK_RELAY_URL='wss://...' (or open the page with ?relay=wss://...).
    Tier order per client: direct P2P -> relay server -> Firebase.
 
  Signaling (Firebase):  rooms/<CODE>/rtc/<clientId>/{o,oc,a,ac}
