@@ -316,8 +316,4 @@ function wire(){
   try{navigator.clipboard.writeText(t)}catch(e){}};
 }
 if(document.readyState=='loading')document.addEventListener('DOMContentLoaded',wire);else wire();
-/* Read-only export: lets other screens (e.g. the victory results panel) look up a
-   player's Google photo/name by id from the last-synced room roster, without any
-   changes to the lobby's own state or the match wire protocol. */
-window.CSKLobby=Object.assign(window.CSKLobby||{},{roster:()=>roster});
 })();
