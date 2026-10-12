@@ -422,8 +422,7 @@ The arena (floor, walls, pickups, bullets, particles, lighting) was dull; it is 
 
 **Safety / performance**
 - `game.js` calls `window.BFX` inside try/catch; if the file fails to load or throws, the original drawing code runs instead.
-- **Performance pass (v8.1):** torch light, grass/sand patches, zone pools and edge glow are baked once per level; rune rings, emblem, zone names and bullet comets are cached sprites; the vignette / low-HP / hit tints are CSS overlays (no canvas cost); wall gradients, text shadow blur and large additive glows were removed; particles are capped and drawn in two passes.
-- **Auto quality** works relative to the display's refresh rate (so a 120 Hz phone that falls to 70 fps is detected too). Level 1 drops braziers' glow, ambient motes and under-player glow; level 2 also drops animated decor. Resolution is never reduced. Force a level with `?fx=0|1|2` in the URL or `localStorage['csk-fx']` (0 = full, 2 = fastest).
+- Auto "lite" mode: if the frame rate stays under ~38 fps for 2.5 s, clouds, ambient motes and the big glow sprites switch off (resolution is never reduced, so text stays sharp). `PFQ.lq` also triggers the cheaper path.
 - Tested in headless Chromium (software rendering, so absolute fps is not representative) at 1280x720 and 844x390, both levels, with no console errors. **Please test on a real phone.**
 
 **game.js edits (all small):** hook call in `onEv`; `burst()` particles flagged as glow; render() wrapped so BFX draws floor/walls/pads/coins/bullets/players/rings/particles/texts/post-fx with the old code kept as fallback; `SZ` zoom-punch in the world transform; `BFX.reset()` in `start()`.

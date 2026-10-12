@@ -1550,8 +1550,8 @@ function loop(t){if(M.style.display=='none')return;try{hm(t)}catch(e){if(!window
 })();
 /* settings: full-screen grid, switches, segmented controls, game-feel feedback */
 (function(){const g=id=>document.getElementById(id),L=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k));localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
-const o=Object.assign({shk:2,fx:2,hf:true,kf:true,an:true,tp:true,dr:true},L('ar-set2')||{}),$$=q=>document.querySelectorAll(q);
-function ap(){window.AR_SHK=[0,.5,1][o.shk];window.AR_FX=[.35,.7,1][o.fx];window.AR_HF=o.hf;window.AR_DR=o.dr;g('kf').style.display=o.kf?'':'none';document.body.classList.toggle('noanim',!o.an);g('tip').style.visibility=o.tp?'':'hidden';
+const o=Object.assign({gfx:2,shk:2,fx:2,hf:true,kf:true,an:true,tp:true,dr:true},L('ar-set2')||{}),$$=q=>document.querySelectorAll(q);
+function ap(){window.GFXQ=o.gfx;window.AR_SHK=[0,.5,1][o.shk];window.AR_FX=[.35,.7,1][o.fx];window.AR_HF=o.hf;window.AR_DR=o.dr;g('kf').style.display=o.kf?'':'none';document.body.classList.toggle('noanim',!o.an);g('tip').style.visibility=o.tp?'':'hidden';
  $$('#st [data-o]').forEach(b=>b.setAttribute('aria-pressed',o[b.dataset.o]?'true':'false'));$$('#st [data-seg]').forEach(r=>[...r.children].forEach(b=>b.setAttribute('aria-pressed',+b.dataset.i==o[r.dataset.seg]?'true':'false')));
  g('o-mute').setAttribute('aria-pressed',mute?'false':'true');L('ar-set2',o)}
 $$('#st [data-o]').forEach(b=>b.onclick=()=>{o[b.dataset.o]=!o[b.dataset.o];ap()});
