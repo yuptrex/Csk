@@ -5,7 +5,7 @@ const PROV=["Great knights don't just fight... they make history.","Steel breaks
 if(!document.getElementById('vs-font')){const l=document.createElement('link');l.id='vs-font';l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,700;0,800;1,600&display=swap';document.head.appendChild(l)}
 let root,st,on=0,pi=0,pt=0;
 const el=(c,t,p)=>{const e=document.createElement(t||'div');if(c)e.className=c;(p||st).appendChild(e);return e};
-function fit(){if(!root)return;const s=Math.min(innerWidth/W,innerHeight/H);st.style.transform=`translate(-50%,-50%) scale(${s})`}
+function fit(){if(!root)return;st.style.transform=`scale(${innerWidth/W},${innerHeight/H})`}
 function pic(e,url,name,hue){e.style.backgroundImage='';e.style.background=`hsl(${hue||40} 60% 30%)`;e.textContent=(name||'?')[0].toUpperCase();
  if(!url)return;const im=new Image();im.referrerPolicy='no-referrer';im.onload=()=>{e.style.backgroundImage=`url("${url.replace(/"/g,'')}")`;e.textContent=''};im.src=url}
 function photoOf(p,myId){return p.id==myId?((window.ARA&&ARA.account()||{}).photo||p.photo||''):(p.photo||'')}
@@ -26,6 +26,10 @@ function build(snap,myId){
   i.style.cssText=`width:${d}px;height:${d}px;left:${e.clientX-r.left-d/2}px;top:${e.clientY-r.top-d/2}px`;
   hb.appendChild(i);hb.disabled=true;
   setTimeout(()=>{const h=document.getElementById('home');if(h)h.click();else location.reload()},180)};
+ const fb=el('','button');fb.id='vs-fs';fb.type='button';fb.setAttribute('aria-label','Full screen');fb.innerHTML='<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#ffd45a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
+ fb.onclick=()=>{const d=document,de=d.documentElement,fs=d.fullscreenElement||d.webkitFullscreenElement;
+  try{fs?(d.exitFullscreen||d.webkitExitFullscreen).call(d):(de.requestFullscreen||de.webkitRequestFullscreen).call(de)}catch(e){}};
+ if(!(document.documentElement.requestFullscreen||document.documentElement.webkitRequestFullscreen))fb.hidden=true;
  fit()}
 window.VS={
  show(snap,myId){if(on)return;on=1;pi=0;build(snap,myId);root.classList.add('on');
