@@ -388,3 +388,17 @@ Tested with a mocked Firebase (two simulated clients): 34/34 checks. Not yet tes
 **Optional TURN.** Players behind symmetric / carrier-grade NAT (common on mobile data) cannot connect peer-to-peer with STUN alone and use the Firebase fallback. To help them, define `window.CSK_ICE_SERVERS` (STUN + your TURN credentials) before `rtc.js` loads.
 
 **Tested:** real WebRTC loopback in headless Chromium with mocked Firebase signaling (2 clients + host: link up in ~100 ms, 100% of snapshots/inputs delivered, zero Firebase traffic while direct, forced link drop -> fallback to Firebase -> recovery) and a load/solo smoke test of the full project. Not tested against live Firebase or across real networks.
+
+---
+
+## Relay server tier (latest change) - for stable in-country latency
+
+P2P cannot connect for many mobile users (carrier-grade / symmetric NAT), and they silently fell back to Firebase in Singapore (200-300 ms).
+Tier order per client is now: **direct P2P -> in-region relay server -> Firebase**.
+
+- `server/relay.js` (+ `package.json`, `Dockerfile`, `fly.toml`, `DEPLOY.md`): a small Node WebSocket forwarder. Host is authoritative as before;
+  the relay only forwards (client->host, host->all clients) and caches the last world-data packet for late joiners. Deploy it in your players' country.
+- `rtc.js`: `WsRelay` client + 3-tier `HybridNet`. Configure `window.CSK_RELAY_URL` in `index.html` (or `?relay=wss://...`). The relay stays idle when P2P works.
+- The in-match readout now ends with the active path: `P2P`, `RELAY` or `SLOW` (Firebase). Use it to diagnose.
+- Tested locally (real WebSocket server + real WebRTC in headless Chromium, mocked Firebase): relay-only, P2P-only (relay idle), and Firebase-only fallback all pass,
+  including late-joiner world data. Not tested on live networks.

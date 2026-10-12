@@ -717,7 +717,7 @@ function netStatus(now){if(now-stT<400)return;stT=now;let t='';const N=NC;
  else if(net&&net.link===false)t='You are offline \u2014 reconnecting\u2026';
  setMsg(t);
  const rc=$('rc');if(rc){let n=0;if(sim)n=1+humanList().length;else for(const p of snap.p)if(!p.bot)n++;
-  rc.textContent='ROOM '+roomCode+' \u00b7 '+n+' online'+(!sim&&N.rtt?' \u00b7 '+Math.round(N.rtt)+' ms'+(net&&net.fast?' \u00b7 P2P':''):'')}}
+  rc.textContent='ROOM '+roomCode+' \u00b7 '+n+' online'+(!sim&&N.rtt?' \u00b7 '+Math.round(N.rtt)+' ms'+(net&&net.path?' \u00b7 '+net.path:''):'')}}
 
 /* ---- session ---- */
 function start(mode,room){audioInit();setTimeout(()=>sfx('ui',{j:0}),80);myName=$('nm').value.trim().slice(0,12)||'Player';try{localStorage.setItem('ar-name',myName)}catch(e){}try{ARA.profile()}catch(e){}
