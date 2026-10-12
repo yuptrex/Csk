@@ -70,7 +70,7 @@ class FirebaseNet{
   else if(m.t=='in'){const r=this.root.child('in/'+m.id);if(!this.reg){this.reg=1;r.onDisconnect().remove()}r.set(s).catch(e=>this.fail(e))}
   else if(m.t=='bye'){if(this.host)this.root.remove().catch(()=>{});else this.root.child('in/'+m.id).set(s).catch(()=>{})}}
  close(){try{this.root.off();this.cref.off()}catch(e){}}}
-function makeNet(room,mode){return window.CSK_HybridNet?new CSK_HybridNet(room,mode=='host'):new FirebaseNet(room,mode=='host')}
+function makeNet(room,mode){if(window.CSK_DED&&window.CSK_ServerNet)return new CSK_ServerNet(room,mode=='host');return window.CSK_HybridNet?new CSK_HybridNet(room,mode=='host'):new FirebaseNet(room,mode=='host')}
 
 
 /* ============ SHARED DATA ============ */
@@ -584,7 +584,7 @@ function hostIn(m){
  if(Array.isArray(m.ed))for(const e of m.ed){if(e&&e.i>(p.lastE|0)){p.lastE=e.i;if(e.k=='b')eb=1;else if(e.k=='q')eq=1;else if(e.k=='u')eu=e.v|0;else if(e.k=='o')eo.push({c:e.c|0,j:e.j|0})}}
  p.in={dx:c(ip.dx,-1,1),dy:c(ip.dy,-1,1),a:+ip.a||0,f:ip.f?1:0,d:ip.d?1:0,r:ip.r?1:0,t:ip.t?1:0,g:ip.g?1:0,
   b:(prev.b||eb)?1:0,q:(prev.q||eq)?1:0,u:prev.u||eu||0,o:(prev.o||[]).concat(eo).slice(-8),vx:+ip.vx>0?c(ip.vx,200,2400):520,vy:+ip.vy>0?c(ip.vy,150,1400):320,kx:isFinite(+ip.kx)&&ip.kx!=null?+ip.kx:p.x,ky:isFinite(+ip.ky)&&ip.ky!=null?+ip.ky:p.y};
- const now=performance.now();p.seen=now;p.sat=now;p.sq=n;p.pg=m.ct|0;p.ea=m.ea|0;if(m.name)p.name=String(m.name).slice(0,12)}
+ const now=performance.now();p.seen=now;p.sat=now;p.sq=n;p.pg=m.ct|0;p.ea=m.ea|0;p.rtt=Math.max(0,Math.min(5000,+m.rt||0));p.pa=String(m.pa||'').slice(0,5);if(m.name)p.name=String(m.name).slice(0,12)}
 function sendDyn(now){
  let minAck=1e15;for(const p of humanList())if((p.ea|0)<minAck)minAck=p.ea|0;
  evq=evq.filter(e=>now-e._t<2500&&e._i>minAck);if(evq.length>60)evq=evq.slice(-60);
@@ -665,7 +665,7 @@ function clientTick(now,dt){
  const sig=nr2(inp.dx)+','+nr2(inp.dy)+','+nr2(inp.a)+','+inp.f+inp.d+inp.r+inp.t+inp.g;
  if(now-sendAt>=(net&&net.fast?15:33)&&!(sig===lastSig&&!pend.length&&now-sendAt<250)){
   sendAt=now;lastSig=sig;const n=++nseq;sentAt[n]=now;delete sentAt[n-150];
-  net.send({t:'in',id:myId,name:myName,hue:myHue,n,ct:Math.round(now),ea:NC.lastEv,
+  net.send({t:'in',id:myId,name:myName,hue:myHue,n,ct:Math.round(now),ea:NC.lastEv,rt:Math.round(NC.rtt||0),pa:(net&&net.path)||'',
    inp:{dx:nr2(inp.dx),dy:nr2(inp.dy),a:nr3(inp.a),f:inp.f,d:inp.d,r:inp.r,t:inp.t,g:inp.g,vx:Math.round(inp.vx),vy:Math.round(inp.vy),kx:Math.round(inp.kx),ky:Math.round(inp.ky)},ed:pend})}
  netStatus(now)}
 
@@ -710,22 +710,23 @@ let stT=0,stMsg='';
 function setMsg(t){const e=$('msg');if(t){if(t!==stMsg||e.textContent!==t){stMsg=t;e.textContent=t}}else if(stMsg){if(e.textContent===stMsg)e.textContent='';stMsg=''}}
 function netStatus(now){if(now-stT<400)return;stT=now;let t='';const N=NC;
  if(!sim){
-  if(!N.buf.length)t=now-t0>9000?'No response from the host. Check the room code, or ask them to create the room again.':'Connecting to room '+roomCode+'\u2026';
+  if(!N.buf.length)t=now-t0>9000?(window.CSK_DED?'Cannot reach the game server. Check your connection and try again.':'No response from the host. Check the room code, or ask them to create the room again.'):'Connecting to room '+roomCode+'\u2026';
   else if(N.gone)t=now-N.goneAt>15000?'The host left the room. Use BACK TO HOME to leave.':'Host connection lost \u2014 waiting for it to come back\u2026';
   else if(net&&net.link===false)t='You are offline \u2014 reconnecting\u2026';
   else if(now-snapAt>2500)t='Connection unstable\u2026'}
  else if(net&&net.link===false)t='You are offline \u2014 reconnecting\u2026';
  setMsg(t);
  const rc=$('rc');if(rc){let n=0;if(sim)n=1+humanList().length;else for(const p of snap.p)if(!p.bot)n++;
-  rc.textContent='ROOM '+roomCode+' \u00b7 '+n+' online'+(!sim&&N.rtt?' \u00b7 '+Math.round(N.rtt)+' ms'+(net&&net.path?' \u00b7 '+net.path:''):'')}}
+  let hx='';if(sim){let w=0,pa='',c=0;for(const q of humanList())if(q.rtt>0){c++;if(q.rtt>w){w=q.rtt;pa=q.pa||''}}hx=' \u00b7 HOST 0 ms'+(c?' \u00b7 worst peer '+Math.round(w)+' ms'+(pa?' \u00b7 '+pa:''):'')}
+  rc.textContent='ROOM '+roomCode+' \u00b7 '+n+' online'+hx+(!sim&&N.rtt?' \u00b7 '+Math.round(N.rtt)+' ms'+(net&&net.path?' \u00b7 '+net.path:''):'')}}
 
 /* ---- session ---- */
-function start(mode,room){audioInit();setTimeout(()=>sfx('ui',{j:0}),80);myName=$('nm').value.trim().slice(0,12)||'Player';try{localStorage.setItem('ar-name',myName)}catch(e){}try{ARA.profile()}catch(e){}
+function start(mode,room,srv){window.CSK_DED=(srv&&mode!='solo'&&window.CSK_ServerNet)?1:0;window.CSK_DED_URL=typeof srv=='string'?srv:'';audioInit();setTimeout(()=>sfx('ui',{j:0}),80);myName=$('nm').value.trim().slice(0,12)||'Player';try{localStorage.setItem('ar-name',myName)}catch(e){}try{ARA.profile()}catch(e){}
  $('menu').style.display='none';$('pz').hidden=false;pzPos();t0=performance.now();
  if('ontouchstart' in window||(window.matchMedia&&window.matchMedia('(pointer:coarse)').matches))ST.on=1;
  if('ontouchstart' in window){try{const d=document.documentElement,pr=(d.requestFullscreen||d.webkitRequestFullscreen).call(d);Promise.resolve(pr).then(()=>screen.orientation.lock('landscape')).catch(()=>{})}catch(e){}}
  
- if(mode!='join'){setLevel(selLv);if(selLv==2)setTimeout(()=>cast('LEVEL 2','Fortress \u2014 sentry turrets online [E]',200,1),700);sim=new Sim(onEv);sim.add(myId,myName,myHue,0);const nb=mode=='solo'?9:0;for(let i=0;i<nb;i++)sim.add('bot'+i,rnd(['Rex','Vix','Kai','Nox','Zed','Ace','Bolt','Jinx']),Math.random()*360|0,1)}
+ if(mode!='join'&&!window.CSK_DED){setLevel(selLv);if(selLv==2)setTimeout(()=>cast('LEVEL 2','Fortress \u2014 sentry turrets online [E]',200,1),700);sim=new Sim(onEv);sim.add(myId,myName,myHue,0);const nb=mode=='solo'?9:0;for(let i=0;i<nb;i++)sim.add('bot'+i,rnd(['Rex','Vix','Kai','Nox','Zed','Ace','Bolt','Jinx']),Math.random()*360|0,1)}
  if(mode!='solo'){roomCode=room;net=makeNet(room,mode);net.onmsg=m=>{if(sim)hostRecv(m);else clientRecv(m)};
    addEventListener('beforeunload',()=>net.send({t:'bye',id:myId}));$('rc').hidden=false;tickT=performance.now();started=1;startTicker()}
   $('msg').textContent=mode=='join'?'Connecting to room '+room+'\u2026':mode=='host'?'Room '+room+' is ready \u2014 tap the code at the top to copy it and send it to your friends':'';

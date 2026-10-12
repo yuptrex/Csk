@@ -241,4 +241,44 @@ class HybridNet{
    else this.fb.send(m,s)}}
  close(){clearInterval(this.gt);try{this.fb.close()}catch(e){}CSKRtc.stop()}}
 window.CSK_HybridNet=HybridNet;
+
+/* ---------- DEDICATED SERVER mode: every player (room creator included) is a client of game-server.js ----------
+   One WebSocket to an in-country server that runs the match. Same wire messages as before (in / st / wd), so game.js's
+   client code (prediction, interpolation, reconciliation) is reused unchanged. No player is the host, so nobody's phone
+   adds latency to anybody else. Configure window.CSK_SERVER_URL in index.html (or open the page with ?server=wss://...,
+   ?server=off turns it off). */
+/* only wss:// (or ws:// to a local/LAN address for testing) is ever accepted: the address can come from the room creator */
+function okUrl(u){u=String(u||'').trim().replace(/\/+$/,'');return(/^wss:\/\/[A-Za-z0-9.-]+(:\d{2,5})?$/.test(u)||/^ws:\/\/(127\.0\.0\.1|localhost|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+)(:\d{2,5})?$/.test(u))?u:''}
+function serverUrl(){let u=window.CSK_SERVER_URL||'';try{const q=new URLSearchParams(location.search).get('server');if(q!==null)u=q}catch(e){}
+ return okUrl(u)}
+/* quick reachability check (used by the room creator in the waiting lobby); resolves to the round trip in ms, or -1 */
+function serverProbe(){return new Promise(res=>{const u=serverUrl();if(!u||typeof fetch==='undefined')return res(-1);
+ const t=now(),to=setTimeout(()=>res(-1),2500);
+ fetch(u.replace(/^ws/,'http')+'/health?_='+Date.now(),{cache:'no-store'}).then(r=>{clearTimeout(to);res(r.ok?Math.max(1,Math.round(now()-t)):-1)}).catch(()=>{clearTimeout(to);res(-1)})})}
+class ServerNet{
+ constructor(code,isHost){
+  this.host=false;this.code=code;this.isH=!!isHost;this.onmsg=null;this.link=null;this.resend=0;this.snapDt=.05;this.root=null;
+  this.ws=null;this.up=0;this.lastRx=0;this.tries=0;this.dead=0;this.rt=0;this.url=okUrl(window.CSK_DED_URL)||serverUrl();
+  try{CSKRtc.stop()}catch(e){}                      /* the peer-to-peer / relay link is not needed in this mode */
+  this.open()}
+ open(){
+  if(this.dead||!this.url){this.link=false;return}
+  const id=typeof myId!=='undefined'?myId:'x',lv=(typeof selLv!=='undefined'&&selLv===2)?2:1;
+  let ws;try{ws=new WebSocket(this.url+'/?room='+this.code+'&id='+encodeURIComponent(id)+'&host='+(this.isH?1:0)+'&lv='+lv)}catch(e){this.link=false;return}
+  this.ws=ws;
+  ws.onopen=()=>{if(this.ws!==ws)return;this.up=1;this.link=true;this.lastRx=now();this.tries=0;if(this.onmsg)this.onmsg({t:'hostup'})};
+  ws.onmessage=e=>{this.lastRx=now();if(typeof e.data!=='string')return;const m=jp(e.data);if(m&&m.t!=='ka'&&this.onmsg)this.onmsg(m)};
+  ws.onerror=()=>{};
+  ws.onclose=ev=>{if(this.ws!==ws)return;this.up=0;this.ws=null;this.link=false;
+   if(ev&&(ev.code===4003||ev.code===4004)){this.dead=1;if(this.onmsg)this.onmsg({t:'gone'});return}   /* room does not exist / is full */
+   if(!this.dead&&this.tries<30){this.tries++;this.rt=setTimeout(()=>this.open(),Math.min(2000,250*this.tries))}}}
+ get fast(){return !!this.up}
+ get path(){return this.up?'SERVER':'OFFLINE'}
+ send(m,str){
+  const w=this.ws;if(!w||w.readyState!==1)return;
+  if(m.t==='in'){if(w.bufferedAmount>BUF_MAX)return}      /* never queue stale inputs */
+  else if(m.t!=='bye')return;
+  try{w.send(str||JSON.stringify(m))}catch(e){}}
+ close(){this.dead=1;clearTimeout(this.rt);const w=this.ws;this.ws=null;this.up=0;try{w&&w.close()}catch(e){}}}
+window.CSK_ServerNet=ServerNet;window.CSKServer={url:serverUrl,probe:serverProbe};
 })();

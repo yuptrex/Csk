@@ -136,7 +136,21 @@
 <script src="fullscreen.js"></script>
 <script src="game.js"></script>
 <script>/* wss:// address of your relay server (see RELAY-DEPLOY.md). Leave empty to use P2P + Firebase only. Can also be set per visit with ?relay=wss://... */
-window.CSK_RELAY_URL="";</script>
+window.CSK_RELAY_URL="";
+/* wss:// address of your DEDICATED GAME SERVER (game-server.js, see SERVER-DEPLOY.md). When set and reachable, every room is played on it: nobody is the host, everyone gets the same low ping. Empty = old P2P/relay/Firebase mode. ?server=wss://... overrides, ?server=off disables. */
+window.CSK_SERVER_URL="";</script>
+<script>/* FREE TURN relay for players the direct peer-to-peer link cannot reach (strict mobile / carrier NAT). Used only when the direct link fails; empty = STUN only.
+   1) make a free account at metered.ca (Open Relay)  2) copy the ICE servers array from your dashboard and paste it below, e.g.
+      window.CSK_ICE_SERVERS=[{urls:"stun:stun.l.google.com:19302"},{urls:"turn:HOST-FROM-DASHBOARD:443",username:"YOUR-USERNAME",credential:"YOUR-CREDENTIAL"}];
+   Keep the stun: entry first. Direct connections never touch the relay, so its monthly allowance only goes to the players who need it. */
+window.CSK_ICE_SERVERS=[
+ {urls:"stun:stun.l.google.com:19302"},
+ {urls:"stun:stun.relay.metered.ca:80"},
+ {urls:"turn:global.relay.metered.ca:80",username:"ce9541a448243dabfd72afb1",credential:"aWknY5KZM7JUOiak"},
+ {urls:"turn:global.relay.metered.ca:80?transport=tcp",username:"ce9541a448243dabfd72afb1",credential:"aWknY5KZM7JUOiak"},
+ {urls:"turn:global.relay.metered.ca:443",username:"ce9541a448243dabfd72afb1",credential:"aWknY5KZM7JUOiak"},
+ {urls:"turns:global.relay.metered.ca:443?transport=tcp",username:"ce9541a448243dabfd72afb1",credential:"aWknY5KZM7JUOiak"}
+];</script>
 <script src="rtc.js"></script>
 <script>window.__cskProg&&__cskProg(92)</script>
 <!-- Room waiting lobby: additive layer, loads after game.js so it can call the game's own start() -->

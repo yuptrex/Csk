@@ -19,7 +19,7 @@
 const $=id=>document.getElementById(id);
 const SEATS=20;
 const KICK_COOL=120000;   /* a removed player must wait this long before joining that room again */
-let lobRoot=null,lobRef=null,startRef=null,kickRef=null,mySeat=-1,myReady=0,amHost=0,code='',roster={},
+let hostSrv=0,lobRoot=null,lobRef=null,startRef=null,kickRef=null,mySeat=-1,myReady=0,amHost=0,code='',roster={},
     countdownT=null,enteredMatch=0,nameT=null,tOff=0;
 const LOAD=()=>window.CSKLoad||{show(){},hide(){},around:f=>f()};
 
@@ -157,7 +157,7 @@ function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':
 /* ---------- Firebase wiring ---------- */
 function writeMe(patch){
  if(!lobRef)return;
- const me=Object.assign({name:myAccount().name,photo:myAccount().photo||'',seat:mySeat,ready:myReady,host:amHost?1:0,dk:devKey(),uk:uidKey(),t:Date.now()},patch||{});
+ const me=Object.assign({name:myAccount().name,photo:myAccount().photo||'',seat:mySeat,ready:myReady,host:amHost?1:0,srv:(amHost&&hostSrv)?hostSrv:0,dk:devKey(),uk:uidKey(),t:Date.now()},patch||{});
  lobRef.set(me).catch(()=>{})}
 function takeSeat(i){
  if(mySeat===i)return;
@@ -195,12 +195,13 @@ function attachRoom(roomCode,isHost){
  startRef.on('value',s=>{
   const v=s.val();
   if(v&&!countdownT&&!enteredMatch)beginCountdown()},()=>{});
- mySeat=amHost?0:-1;myReady=0;
+ mySeat=amHost?0:-1;myReady=0;hostSrv=0;
  writeMe({});
+ if(amHost&&window.CSKServer&&CSKServer.url()){const c0=code,su=CSKServer.url();CSKServer.probe().then(ms=>{if(code===c0&&ms>0){hostSrv=su;writeMe({})}})}   /* server reachable -> everybody plays on it */
  showLobby()}
 
 function detachRoom(){
- try{window.CSKRtc&&CSKRtc.stop()}catch(e){}
+ hostSrv=0;try{window.CSKRtc&&CSKRtc.stop()}catch(e){}
  try{if(lobRoot)lobRoot.off()}catch(e){}
  try{if(startRef)startRef.off()}catch(e){}
  try{if(kickRef)kickRef.off()}catch(e){}
@@ -238,7 +239,7 @@ function beginCountdown(){
   n.textContent=left},1000)}
 function enterMatch(){
  if(enteredMatch)return;enteredMatch=1;
- const L=LOAD(),host=amHost,rc=code;
+ const L=LOAD(),host=amHost,rc=code,hr=Object.values(roster).find(p=>p.host),srv=host?hostSrv:((hr&&typeof hr.srv=='string')?hr.srv:0);
  L.show();
  try{window.CSKFullscreen&&CSKFullscreen.enter()}catch(e){}   /* works if the browser still counts a recent tap; READY/START already asked */
  try{if(lobRoot)lobRoot.off()}catch(e){}
@@ -250,7 +251,7 @@ function enterMatch(){
  setTimeout(()=>{
   hideLobby();
   const cnt=$('lob-count');if(cnt)cnt.hidden=true;
-  try{start(host?'host':'join',rc)}finally{L.hide()}},120)}
+  try{start(host?'host':'join',rc,srv)}finally{L.hide()}},120)}
 
 /* ---------- login gate + wiring the home buttons ---------- */
 function requireLogin(){

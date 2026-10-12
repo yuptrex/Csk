@@ -402,3 +402,17 @@ Tier order per client is now: **direct P2P -> in-region relay server -> Firebase
 - The in-match readout now ends with the active path: `P2P`, `RELAY` or `SLOW` (Firebase). Use it to diagnose.
 - Tested locally (real WebSocket server + real WebRTC in headless Chromium, mocked Firebase): relay-only, P2P-only (relay idle), and Firebase-only fallback all pass,
   including late-joiner world data. Not tested on live networks.
+
+---
+
+## Dedicated game server (latest change) - everyone is a client, nobody is the host
+
+Problem: the room creator's browser ran the simulation, so every joiner's ping depended on the creator's device/connection, and the creator's device carried extra load.
+Fix: `game-server.js` runs the match (same `Sim` code, copied verbatim from game.js lines 76-271 into `server-sim.js`; the host-side logic of one room is in `server-room.js`, one vm context per room). All players, the creator included, connect over one WebSocket (`ServerNet` in `rtc.js`) and use the existing client prediction/interpolation/reconciliation. Same wire messages (`in`/`st`/`wd`).
+- `index.html`: `window.CSK_SERVER_URL` (empty = old mode). `?server=wss://...` overrides, `?server=off` disables.
+- `lobby.js`: the creator probes `/health` when the lobby opens and publishes `srv:<address>` on its own seat record; every client reads it in `enterMatch()` and calls `start(mode, room, srv)`, so the whole room always uses the same mode.
+- `game.js`: `start(mode,room,srv)` skips creating the local `Sim` when `srv` is set; `makeNet` returns `ServerNet`; the in-match readout now also shows each peer's ping to the creator in the old mode.
+- Server drops stale snapshots for a backed-up client (never queues), caps input rate, and forces every message to the sender's own player id.
+- Tested: headless Node clients (8 players: server adds ~0.5 ms, snapshots every 33 ms), and real Chromium pages (host + joiner) running the actual client code against the server, 59 fps, 3 ms loopback RTT, movement visible on both. NOT tested: the Firebase lobby -> match handoff against live Firebase, or any real network.
+- Free hosting options (own PC/phone + Cloudflare quick tunnel, or Oracle Always Free Mumbai): `FREE-SERVER.md`. Fly.io/Koyeb are not free any more.
+- The server address travels creator -> joiners: the creator opens the game with `?server=wss://...` (or `CSK_SERVER_URL`), `lobby.js` publishes it on the creator's seat record (`srv` = the address), joiners pass it to `start(mode,room,srv)` -> `window.CSK_DED_URL`. `rtc.js okUrl()` accepts only `wss://host[:port]` (and `ws://` to localhost/LAN for testing).
