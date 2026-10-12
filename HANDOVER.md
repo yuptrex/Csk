@@ -405,14 +405,24 @@ Tier order per client is now: **direct P2P -> in-region relay server -> Firebase
 
 ---
 
-## Dedicated game server (latest change) - everyone is a client, nobody is the host
+## Battleground visual upgrade (v8) - `battle-fx.js`
 
-Problem: the room creator's browser ran the simulation, so every joiner's ping depended on the creator's device/connection, and the creator's device carried extra load.
-Fix: `game-server.js` runs the match (same `Sim` code, copied verbatim from game.js lines 76-271 into `server-sim.js`; the host-side logic of one room is in `server-room.js`, one vm context per room). All players, the creator included, connect over one WebSocket (`ServerNet` in `rtc.js`) and use the existing client prediction/interpolation/reconciliation. Same wire messages (`in`/`st`/`wd`).
-- `index.html`: `window.CSK_SERVER_URL` (empty = old mode). `?server=wss://...` overrides, `?server=off` disables.
-- `lobby.js`: the creator probes `/health` when the lobby opens and publishes `srv:<address>` on its own seat record; every client reads it in `enterMatch()` and calls `start(mode, room, srv)`, so the whole room always uses the same mode.
-- `game.js`: `start(mode,room,srv)` skips creating the local `Sim` when `srv` is set; `makeNet` returns `ServerNet`; the in-match readout now also shows each peer's ping to the creator in the old mode.
-- Server drops stale snapshots for a backed-up client (never queues), caps input rate, and forces every message to the sender's own player id.
-- Tested: headless Node clients (8 players: server adds ~0.5 ms, snapshots every 33 ms), and real Chromium pages (host + joiner) running the actual client code against the server, 59 fps, 3 ms loopback RTT, movement visible on both. NOT tested: the Firebase lobby -> match handoff against live Firebase, or any real network.
-- Free hosting options (own PC/phone + Cloudflare quick tunnel, or Oracle Always Free Mumbai): `FREE-SERVER.md`. Fly.io/Koyeb are not free any more.
-- The server address travels creator -> joiners: the creator opens the game with `?server=wss://...` (or `CSK_SERVER_URL`), `lobby.js` publishes it on the creator's seat record (`srv` = the address), joiners pass it to `start(mode,room,srv)` -> `window.CSK_DED_URL`. `rtc.js okUrl()` accepts only `wss://host[:port]` (and `ws://` to localhost/LAN for testing).
+The arena (floor, walls, pickups, bullets, particles, lighting) was dull; it is now fully re-painted by a new **draw-only** file, `battle-fx.js` (loaded before `game.js`). Gameplay, physics, netcode and the HUD logic are untouched.
+
+**What changed**
+- Floor: baked flagstone texture (bevels, cracks, inlays) + soft grass/sand/water colour patches and zone light pools (baked once per level into a 1/8-res map), animated rune rings, a royal emblem at the map centre, glowing zone names, drifting cloud shadows, an energy barrier at the map edge.
+- Level 1 = emerald courtyard (teal stone, green grass, gold trim). Level 2 = violet wastes (plum stone, magma pools, magenta trim). Palettes live in `PAL` at the top of the file.
+- Decor re-drawn: swaying grass, mossy rocks, rippling ponds / bubbling magma, flowering bushes / glow fungus, glowing crystals, floor sigils.
+- Walls: raised 3D look (front face, lit top edge, brick texture, corner pillars, rivets), animated light-dash trim, and flickering braziers that light the area.
+- Pickup pads get a coloured light pool (+ light beam for guns); coins glow and twinkle.
+- Bullets are glowing comets; every shot has a muzzle flash, smoke puff and ejected shell casing.
+- Hits, kills, pickups, dash, spawn, bomb blast, chest/upgrade: additive spark bursts, light flashes, shock rings, scorch marks on the ground (kills / bombs).
+- Players: colour glow under each character, new health bar (trailing damage segment, low-HP pulse), outlined names, pop-in damage numbers.
+- Screen: vignette, low-HP red pulse, hit flash, small camera "punch" zoom on your shots / hits / kills, ambient fireflies (L1) or rising embers (L2).
+
+**Safety / performance**
+- `game.js` calls `window.BFX` inside try/catch; if the file fails to load or throws, the original drawing code runs instead.
+- Auto "lite" mode: if the frame rate stays under ~38 fps for 2.5 s, clouds, ambient motes and the big glow sprites switch off (resolution is never reduced, so text stays sharp). `PFQ.lq` also triggers the cheaper path.
+- Tested in headless Chromium (software rendering, so absolute fps is not representative) at 1280x720 and 844x390, both levels, with no console errors. **Please test on a real phone.**
+
+**game.js edits (all small):** hook call in `onEv`; `burst()` particles flagged as glow; render() wrapped so BFX draws floor/walls/pads/coins/bullets/players/rings/particles/texts/post-fx with the old code kept as fallback; `SZ` zoom-punch in the world transform; `BFX.reset()` in `start()`.
