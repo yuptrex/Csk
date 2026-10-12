@@ -1,7 +1,7 @@
 #vs{position:fixed;inset:0;z-index:9000;background:#05060c;display:none;overflow:hidden}
 #vs.on{display:block;animation:vsin .5s ease-out}
 @keyframes vsin{from{opacity:0}to{opacity:1}}
-#vs-st{position:absolute;left:50%;top:50%;width:1983px;height:793px;transform-origin:0 0;background:url(victory-bg.jpg) 0 0/100% 100%;font-family:Rajdhani,'Segoe UI',Arial,sans-serif;color:#eef3ff}
+#vs-st{position:absolute;left:50%;top:50%;width:1983px;height:793px;transform-origin:0 0;background:url(victory-bg.png) 0 0/100% 100%;font-family:Rajdhani,'Segoe UI',Arial,sans-serif;color:#eef3ff}
 #vs-st>*{position:absolute}
 .vr{left:658px;width:844px;height:38px;background:#0a1220;border:1px solid #1f3350;border-radius:6px;display:flex;align-items:center;font-weight:700;font-size:21px;box-sizing:border-box}
 .vr>*{position:absolute;white-space:nowrap}
@@ -20,7 +20,7 @@
 @keyframes vrot{to{transform:rotate(360deg)}}
 #vs-pn{left:343px;top:418px;width:248px;height:36px;background:#0b0f18;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;color:#fff;overflow:hidden}
 #vs-pk{left:452px;top:566px;width:78px;height:50px;background:#07090f;display:flex;align-items:center;justify-content:center;font-size:44px;font-weight:800;color:#ffd23a}
-#vs-pv{left:98px;top:709px;width:520px;height:48px;font-size:18px;letter-spacing:1.5px;line-height:23px;color:#9fb0c8;text-transform:uppercase;transition:opacity .6s}
+#vs-pv{left:92px;top:706px;width:540px;height:54px;padding:3px 6px;box-sizing:border-box;background:url(victory-bg.jpg) -92px -706px;font-size:18px;letter-spacing:1.5px;line-height:23px;color:#9fb0c8;text-transform:uppercase;transition:opacity .6s}
 #vs-pv.f{opacity:0}
 #vs-home{left:1648px;top:24px;width:308px;height:72px;background:transparent;border:0;border-radius:36px;cursor:pointer;overflow:hidden;transition:transform .1s,box-shadow .2s;-webkit-tap-highlight-color:transparent}
 #vs-home:hover{box-shadow:0 0 22px 4px rgba(255,200,70,.55)}
