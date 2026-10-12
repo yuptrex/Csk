@@ -21,6 +21,7 @@
 <link rel="stylesheet" href="theme-hud.css">
 <link rel="stylesheet" href="home-image.css">
 <link rel="stylesheet" href="theme-lobby.css">
+<link rel="stylesheet" href="theme-victory.css">
 <link rel="preload" as="image" href="loading-bg.jpg" fetchpriority="high">
 <link rel="preload" as="image" href="home-bg.jpg">
 <link rel="prefetch" as="image" href="lobby-bg.jpg">
@@ -66,6 +67,44 @@
 })();
 </script>
 <canvas id="c"></canvas><div id="kf"></div><div id="sb" hidden></div><div id="bc"></div><div id="msg"></div><div id="rc" hidden title="Tap to copy"></div><button id="home" hidden>BACK TO HOME</button><div id="rot"><div class="ph"></div>Rotate your phone to landscape to play</div>
+<!-- Victory / defeat results panel. Pure presentation: reads match-end state (snap.w / snap.p)
+     via js/victory.js and reuses the existing #home button's logic unchanged (just relocates it
+     into this panel). Hidden by default; shown/hidden by game.js at match end. -->
+<div id="csk-vic" hidden aria-hidden="true">
+  <div class="vic-scrim"></div>
+  <div class="vic-wrap">
+    <div class="vic-logo">
+      <svg viewBox="0 0 64 64" class="vic-logo-ic" aria-hidden="true"><path d="M32 6 54 18v20L32 58 10 38V18z" fill="none" stroke="currentColor" stroke-width="3"/><path d="M20 36 32 14l12 22h-6l-6-10-6 10z" fill="currentColor"/></svg>
+      <div class="vic-logo-tx"><b>CSK</b><span>CSuperKnights</span></div>
+    </div>
+    <div class="vic-title-wrap">
+      <div class="vic-wing vic-wing-l" aria-hidden="true"></div>
+      <div class="vic-title-card">
+        <svg class="vic-crown" viewBox="0 0 48 30" aria-hidden="true"><path d="M4 26 1 9l10 7 13-14 13 14 10-7-3 17z"/><circle cx="24" cy="4" r="3.2"/><circle cx="4" cy="12" r="2.6"/><circle cx="44" cy="12" r="2.6"/></svg>
+        <h1 id="vic-title">VICTORY</h1>
+        <div class="vic-sub" id="vic-sub">YOU ARE THE LAST KNIGHT STANDING!</div>
+      </div>
+      <div class="vic-wing vic-wing-r" aria-hidden="true"></div>
+    </div>
+    <div class="vic-body">
+      <div class="vic-champ">
+        <div class="vic-champ-badge">
+          <div class="vic-champ-rank">1</div>
+          <div class="vic-champ-photo" id="vic-champ-photo"></div>
+        </div>
+        <div class="vic-champ-name" id="vic-champ-name">—</div>
+        <div class="vic-champ-tag" id="vic-champ-tag">THE CHAMPION</div>
+        <div class="vic-champ-kills"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C7 2 4 5.5 4 10c0 2.6 1.3 4.5 2.6 5.8L5 22h3l1-3.3c.9.2 1.9.3 3 .3s2.1-.1 3-.3L16 22h3l-1.6-6.2C18.7 14.5 20 12.6 20 10c0-4.5-3-8-8-8zm-3 9a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm6 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zM9 15c.9.6 1.9 1 3 1s2.1-.4 3-1l-1 2H10z"/></svg><b id="vic-champ-kills-n">0</b></div>
+      </div>
+      <div class="vic-table-wrap">
+        <div class="vic-table-head"><span>RANK</span><span>PLAYER NAME</span><span>KILLS</span></div>
+        <div class="vic-table" id="vic-table"></div>
+      </div>
+    </div>
+    <div class="vic-proverb-wrap"><span class="vic-pv-ic">♛</span><span id="vic-proverb">GREAT KNIGHTS DON'T JUST FIGHT… THEY MAKE HISTORY.</span><span class="vic-pv-ic">♛</span></div>
+    <div id="vic-home-slot"></div>
+  </div>
+</div>
 <button id="pz" hidden aria-label="Pause">❚❚</button>
 <div id="pm" hidden><div class="box"><h1>PAUSED</h1><div class="tag" id="pn"></div><button id="pr">RESUME</button><button class="s" id="pl">BUTTON LAYOUT</button><button class="s" id="ph">EXIT TO HOME</button></div></div>
 <div id="ed" hidden><canvas id="ec"></canvas><div id="ep"><b>BUTTON LAYOUT</b><span id="en"></span><label>Size <input type="range" id="esz" min="50" max="180" value="100"></label><label>Opacity <input type="range" id="eop" min="25" max="100" value="100"></label><button class="s" id="ers">RESET</button><button id="eok">SAVE &amp; CLOSE</button></div></div>
@@ -143,5 +182,6 @@ window.CSK_RELAY_URL="";</script>
 <!-- Room waiting lobby: additive layer, loads after game.js so it can call the game's own start() -->
 <script src="lobby-fx.js"></script>
 <script src="lobby.js"></script>
+<script src="victory.js"></script>
 <script>window.__cskProg&&__cskProg(97)</script>
 </body></html>

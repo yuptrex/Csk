@@ -1327,7 +1327,13 @@ function hudFx(m,now,W,H,F,dt){
  if(m&&m.al&&lt>=0&&lt<.9){const k=lt/.9;cx.fillStyle=`rgba(255,255,255,${.55*(1-k)*(1-k)})`;cx.fillRect(0,0,W,H);cx.strokeStyle=`hsla(${m.hue},95%,70%,${1-k})`;cx.lineWidth=8*(1-k)+1;cx.beginPath();cx.arc(W/2,H/2,Math.max(1,k*Math.max(W,H)*.6),0,6.28);cx.stroke()}
  if(m&&m.al&&m.inv>0&&!snap.w){const g=cx.createRadialGradient(W/2,H/2,H*.35,W/2,H/2,H*.85);g.addColorStop(0,`hsla(${m.hue},95%,65%,0)`);g.addColorStop(1,`hsla(${m.hue},95%,65%,${.28*Math.min(1,m.inv/.5)})`);cx.fillStyle=g;cx.fillRect(0,0,W,H)}
  if(m&&!m.al&&!snap.w)deathUI(m,now,W,H,F);
- if(m&&snap.w)roundFx((now-winT)/1000,snap.w.id==myId,W,H,F,dt,snap.w,m);else $('home').hidden=true;
+ if(m&&snap.w){
+  const rt=(now-winT)/1000,won=snap.w.id==myId;
+  if(!confDone){confDone=1;try{window.CSKVictory&&CSKVictory.show(snap.w,snap.p,won)}catch(e){}
+   for(let i=0;i<(won?70:28);i++){const l=Math.random()<.5;conf.push({x:l?0:W,y:H+10,vx:(l?1:-1)*(140+Math.random()*440),vy:-(520+Math.random()*680),r:Math.random()*6,vr:(Math.random()-.5)*14,w:6+Math.random()*6,h:4+Math.random()*5,c:won?`hsl(${(38+Math.random()*30)|0} 92% ${58+Math.random()*18|0}%)`:`hsl(${(0+Math.random()*10)|0} 70% ${35+Math.random()*10|0}%)`,l:6.2,rb:0})}}
+  if(won&&rt<3.5&&Math.random()<dt*32)conf.push({x:Math.random()*W,y:-10,vx:(Math.random()-.5)*90,vy:60+Math.random()*120,r:Math.random()*6,vr:(Math.random()-.5)*10,w:6+Math.random()*6,h:4+Math.random()*5,c:`hsl(${(38+Math.random()*30)|0} 92% 60%)`,l:6,rb:0});
+  const vg=cx.createRadialGradient(W/2,H/2,H*.2,W/2,H/2,H*.9);if(won){vg.addColorStop(0,'rgba(40,28,0,0)');vg.addColorStop(1,`rgba(40,28,0,${.45*cl(rt*2,0,1)})`)}else{vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,`rgba(25,0,0,${.45*cl(rt*2,0,1)})`)}cx.fillStyle=vg;cx.fillRect(0,0,W,H);
+ }else{try{window.CSKVictory&&CSKVictory.hide()}catch(e){}}
  if(conf.length){for(const q of conf){q.vy+=(q.rb?300:520)*dt;q.vx*=1-(q.rb?.5:1.1)*dt;q.x+=q.vx*dt;q.y+=q.vy*dt;q.r+=q.vr*dt;q.l-=dt}conf=conf.filter(q=>q.y<H+20&&q.l>0);
   for(const q of conf){cx.save();cx.globalAlpha=Math.min(1,q.l/1.2);
    if(q.rb){cx.fillStyle=q.c;ribbon(q.x,q.y,q.w,q.h,q.r)}
