@@ -170,6 +170,7 @@ function toggleReady(){
 
 function attachRoom(roomCode,isHost){
  code=roomCode;amHost=!!isHost;
+ try{window.CSKRtc&&CSKRtc.start(roomCode,!!isHost)}catch(e){}   /* open the direct link while everyone waits in the lobby */
  lobRoot=FBdb.ref('rooms/'+code+'/lobby');
  lobRef=lobRoot.child(myId);
  startRef=FBdb.ref('rooms/'+code+'/lstart');
@@ -199,6 +200,7 @@ function attachRoom(roomCode,isHost){
  showLobby()}
 
 function detachRoom(){
+ try{window.CSKRtc&&CSKRtc.stop()}catch(e){}
  try{if(lobRoot)lobRoot.off()}catch(e){}
  try{if(startRef)startRef.off()}catch(e){}
  try{if(kickRef)kickRef.off()}catch(e){}

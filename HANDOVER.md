@@ -369,3 +369,22 @@ Tested with a mocked Firebase (two simulated clients): 34/34 checks. Not yet tes
   on READY, START and a tap on the countdown overlay (fullscreen.js `CSKFullscreen`), plus once more when the match begins.
   If the browser is still windowed, the countdown shows "Tap anywhere for full screen".
   iPhone Safari has no Fullscreen API, so it cannot do this there.
+
+---
+
+## Low-latency netcode: direct WebRTC link (latest change)
+
+**Problem.** Every packet went client -> Firebase (Singapore) -> host -> Firebase -> client: four long hops, 200-300 ms ping.
+
+**Fix (`rtc.js`, new).** Clients now talk to the host directly over WebRTC data channels. Firebase is used only for the handshake and as an automatic fallback.
+- `u` channel: unordered, no retransmits (snapshots `st`, inputs `in`). `r` channel: reliable (world data `wd`, `bye`, 500 ms keepalive).
+- The link is opened in the waiting lobby (`CSKRtc.start()` from `attachRoom`), so it is already up when the match starts.
+- `CSK_HybridNet` replaces `FirebaseNet` in `makeNet()`; same interface. A client whose direct link is down or silent >1.5 s sends inputs over both paths and accepts Firebase snapshots; the host starts writing Firebase `st` as soon as it sees a Firebase input, and stops 3 s after the last one.
+- `game.js` edits (all small): `makeNet`; host snapshot rate 30 Hz on direct links with <=4 peers (20 Hz otherwise); client input rate 60 Hz on the direct link (30 Hz otherwise); interpolation floor 60 ms (was 90) on the direct link; positions rounded to 0.1 px and velocities to whole px/s on the wire (~35% smaller snapshots); ping readout shows "P2P" when direct. Simulation is untouched.
+
+**Required Firebase rule** (signaling only): allow read/write on `rooms/$code/rtc`, e.g. inside your existing `rooms/$code` rule:
+`"rtc": { ".read": true, ".write": true }`  (tighten to your auth model as needed). Without it the game still works, just over the old Firebase relay.
+
+**Optional TURN.** Players behind symmetric / carrier-grade NAT (common on mobile data) cannot connect peer-to-peer with STUN alone and use the Firebase fallback. To help them, define `window.CSK_ICE_SERVERS` (STUN + your TURN credentials) before `rtc.js` loads.
+
+**Tested:** real WebRTC loopback in headless Chromium with mocked Firebase signaling (2 clients + host: link up in ~100 ms, 100% of snapshots/inputs delivered, zero Firebase traffic while direct, forced link drop -> fallback to Firebase -> recovery) and a load/solo smoke test of the full project. Not tested against live Firebase or across real networks.

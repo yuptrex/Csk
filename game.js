@@ -70,7 +70,7 @@ class FirebaseNet{
   else if(m.t=='in'){const r=this.root.child('in/'+m.id);if(!this.reg){this.reg=1;r.onDisconnect().remove()}r.set(s).catch(e=>this.fail(e))}
   else if(m.t=='bye'){if(this.host)this.root.remove().catch(()=>{});else this.root.child('in/'+m.id).set(s).catch(()=>{})}}
  close(){try{this.root.off();this.cref.off()}catch(e){}}}
-function makeNet(room,mode){return new FirebaseNet(room,mode=='host')}
+function makeNet(room,mode){return window.CSK_HybridNet?new CSK_HybridNet(room,mode=='host'):new FirebaseNet(room,mode=='host')}
 
 
 /* ============ SHARED DATA ============ */
@@ -543,7 +543,7 @@ const IDLE={dx:0,dy:0,a:0,f:0,d:0,r:0,t:0,g:0,b:0,q:0,u:0};
 let curInp=IDLE,pend=[],eseq=0,nseq=0,sendAt=0,lastSig='',sentAt={},latchU={};
 
 /* ---------- compact wire format ---------- */
-function packP(p){return[p.id,p.x,p.y,p.vx,p.vy,nr3(p.a||0),nr1(p.hp),nr1(p.sh),p.w,p.am,nz(p.rel),nz(p.dc),nz(p.dt),nz(p.sp),nz(p.inv),p.al,p.k,p.d,p.c,p.ul,p.rf,p.kb,p.kw,p.dn,p.bl,p.kt,p.td,p.rc,p.sq|0,p.ia|0,p.pg|0,p.le|0,p.rv|0,p.mk|0]}
+function packP(p){return[p.id,nr1(p.x),nr1(p.y),Math.round(p.vx||0),Math.round(p.vy||0),nr3(p.a||0),nr1(p.hp),nr1(p.sh),p.w,p.am,nz(p.rel),nz(p.dc),nz(p.dt),nz(p.sp),nz(p.inv),p.al,p.k,p.d,p.c,p.ul,p.rf,p.kb,p.kw,p.dn,p.bl,p.kt,p.td,p.rc,p.sq|0,p.ia|0,p.pg|0,p.le|0,p.rv|0,p.mk|0]}
 function unpackP(r,R){const o={};for(let i=0;i<PF.length;i++)o[PF[i]]=r[i];const q=R[o.id];o.rs=Math.ceil(o.rf||0);o.name=q?q[0]:'Player';o.hue=q?q[1]:200;o.bot=q?q[2]:0;return o}
 function unpackSnap(m){const p=m.P.map(r=>unpackP(r,NW.R)),pm={};for(const o of p)pm[o.id]=o;
  return{p,pm,b:m.B.map(a=>({i:a[0],x:a[1],y:a[2],vx:a[3],vy:a[4],h:a[5],o:a[6],r:a[7]})),t:m.tr||[],rp:m.rp||[],bm:m.bm||[],w:m.w||null,lv:m.lv,k:NW.k,h:NW.h,n:NW.n,cr:NW.cr}}
@@ -571,7 +571,7 @@ function hostTick(now,dt){
   nh++}
  snap=sim.snap();snapAt=now;
  if(!nh){evq.length=0;evc.length=0}
- hSend+=dt;if(hSend>=(nh?.05:1)){hSend=0;sendDyn(now)}
+ hSend+=dt;if(hSend>=(nh?(net.snapDt||.05):1)){hSend=0;sendDyn(now)}
  if(now-wdAt>=350||net.resend){sendWorld(now,!!net.resend);net.resend=0}
  netStatus(now)}
 function hostIn(m){
@@ -590,7 +590,7 @@ function sendDyn(now){
  evq=evq.filter(e=>now-e._t<2500&&e._i>minAck);if(evq.length>60)evq=evq.slice(-60);
  if(evc.length>60)evc=evc.slice(-60);
  const s=snap;for(const p of s.p){const q=sim.p[p.id];p.le=q&&q.lastE|0}
- net.send({t:'st',q:qSeq++,T:Math.round(now),ei:evSeq,lv:LV,P:s.p.map(packP),B:s.b.map(b=>[b.i,b.x,b.y,b.vx,b.vy,b.h,b.o,b.r]),tr:s.t,rp:s.rp,bm:s.bm,w:s.w,E:evq,C:evc});
+ net.send({t:'st',q:qSeq++,T:Math.round(now),ei:evSeq,lv:LV,P:s.p.map(packP),B:s.b.map(b=>[b.i,nr1(b.x),nr1(b.y),Math.round(b.vx),Math.round(b.vy),b.h,b.o,b.r]),tr:s.t,rp:s.rp,bm:s.bm,w:s.w,E:evq,C:evc});
  evc=[]}
 function sendWorld(now,force){
  const s=snap,R={};for(const id in sim.p){const p=sim.p[id];R[id]=[p.name,p.hue,p.bot?1:0]}
@@ -615,7 +615,7 @@ function clientRecv(m){
  if(m.q<=N.lastQ)return;N.lastQ=m.q;N.gone=0;
  const s=unpackSnap(m);
  const gap=N.lastRt?now-N.lastRt:50;N.lastRt=now;
- N.ivl+=(Math.min(gap,500)-N.ivl)*.1;N.jit+=(Math.abs(gap-N.ivl)-N.jit)*.1;{const tg=Math.max(90,Math.min(320,N.ivl*1.6+N.jit*2.5));N.delay+=Math.max(-1,Math.min(6,tg-N.delay))}   // slewed: a sudden change would visibly shift everyone
+ N.ivl+=(Math.min(gap,500)-N.ivl)*.1;N.jit+=(Math.abs(gap-N.ivl)-N.jit)*.1;{const tg=Math.max(net&&net.fast?60:90,Math.min(320,N.ivl*1.6+N.jit*2.5));N.delay+=Math.max(-1,Math.min(6,tg-N.delay))}   // slewed: a sudden change would visibly shift everyone
  N.offS.push(now-m.T);if(N.offS.length>150)N.offS.shift();let o=1e15;for(const v of N.offS)if(v<o)o=v;N.off=N.buf.length?N.off+Math.max(-1,Math.min(1,o-N.off)):o;
  N.buf.push({T:m.T,rt:now,s,pm:s.pm});if(N.buf.length>40)N.buf.shift();
  const mp=s.pm[myId];
@@ -663,7 +663,7 @@ function clientTick(now,dt){
  if(pend.length>24)pend.splice(0,pend.length-24);
  curInp=inp;
  const sig=nr2(inp.dx)+','+nr2(inp.dy)+','+nr2(inp.a)+','+inp.f+inp.d+inp.r+inp.t+inp.g;
- if(now-sendAt>=33&&!(sig===lastSig&&!pend.length&&now-sendAt<250)){
+ if(now-sendAt>=(net&&net.fast?15:33)&&!(sig===lastSig&&!pend.length&&now-sendAt<250)){
   sendAt=now;lastSig=sig;const n=++nseq;sentAt[n]=now;delete sentAt[n-150];
   net.send({t:'in',id:myId,name:myName,hue:myHue,n,ct:Math.round(now),ea:NC.lastEv,
    inp:{dx:nr2(inp.dx),dy:nr2(inp.dy),a:nr3(inp.a),f:inp.f,d:inp.d,r:inp.r,t:inp.t,g:inp.g,vx:Math.round(inp.vx),vy:Math.round(inp.vy),kx:Math.round(inp.kx),ky:Math.round(inp.ky)},ed:pend})}
@@ -717,7 +717,7 @@ function netStatus(now){if(now-stT<400)return;stT=now;let t='';const N=NC;
  else if(net&&net.link===false)t='You are offline \u2014 reconnecting\u2026';
  setMsg(t);
  const rc=$('rc');if(rc){let n=0;if(sim)n=1+humanList().length;else for(const p of snap.p)if(!p.bot)n++;
-  rc.textContent='ROOM '+roomCode+' \u00b7 '+n+' online'+(!sim&&N.rtt?' \u00b7 '+Math.round(N.rtt)+' ms':'')}}
+  rc.textContent='ROOM '+roomCode+' \u00b7 '+n+' online'+(!sim&&N.rtt?' \u00b7 '+Math.round(N.rtt)+' ms'+(net&&net.fast?' \u00b7 P2P':''):'')}}
 
 /* ---- session ---- */
 function start(mode,room){audioInit();setTimeout(()=>sfx('ui',{j:0}),80);myName=$('nm').value.trim().slice(0,12)||'Player';try{localStorage.setItem('ar-name',myName)}catch(e){}try{ARA.profile()}catch(e){}
