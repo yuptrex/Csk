@@ -37,8 +37,8 @@ function getAuth(){
  return auth}
 
 function say(t,k){clearTimeout(msgT);msg.textContent=t||'';msg.dataset.k=k||'';if(t&&k==='bad')msgT=setTimeout(function(){if(msg.dataset.k==='bad')say('')},9000)}
-function setBusy(b){busy=b;root.classList.toggle('is-busy',b);em.disabled=pw.disabled=b;clearTimeout(busyT);
- if(b)busyT=setTimeout(function(){if(busy&&!done){setBusy(false);say('This is taking longer than usual. Please try again.','bad')}},25000);refresh()}
+function setBusy(b,noTimeout){busy=b;root.classList.toggle('is-busy',b);em.disabled=pw.disabled=b;clearTimeout(busyT);
+ if(b&&!noTimeout)busyT=setTimeout(function(){if(busy&&!done){setBusy(false);say('This is taking longer than usual. Please try again.','bad')}},25000);refresh()}
 function refresh(){var ok=tc.checked&&!busy&&em.value.trim()&&pw.value;go.classList.toggle('is-off',!ok);go.setAttribute('aria-disabled',ok?'false':'true')}
 function shake(){terms.classList.remove('shake');void terms.offsetWidth;terms.classList.add('shake');setTimeout(function(){terms.classList.remove('shake')},600)}
 function needTerms(){if(tc.checked)return false;say('Please agree to the Terms and Conditions first.','bad');shake();return true}
@@ -47,14 +47,17 @@ function show(){if(done)return;root.hidden=false;root.classList.remove('lg-out')
 function hide(){root.classList.add('lg-out');document.body.classList.remove('lg-open');setTimeout(function(){if(done)root.hidden=true},380)}
 
 /* ---------- sign in ---------- */
-function fail(e){setBusy(false);var c=e&&e.code||'';if(c==='auth/popup-closed-by-user'||c==='auth/cancelled-popup-request'){say('');return}say(errText(e),'bad')}
-async function google(){
+function fail(e){setBusy(false);if(window.CSKGoogle&&CSKGoogle.isCancel(e)){say('');return}say(errText(e),'bad')}
+/* Google: tap -> Google's account chooser opens (see google-auth.js). Must stay synchronous up to signIn() so the popup is allowed. */
+function google(){
  if(busy||needTerms())return;
- var a=getAuth();if(!a){say('Could not reach the server. Check your connection or ad-blocker, then reload.','bad');return}
- setBusy(true);say('Opening Google\u2026');
- var p=new firebase.auth.GoogleAuthProvider();p.setCustomParameters({prompt:'select_account'});
- try{await a.signInWithPopup(p);say('Signing in\u2026')}
- catch(e){if(e&&e.code==='auth/popup-blocked'){try{await a.signInWithRedirect(p);return}catch(x){e=x}}fail(e)}}
+ var a=getAuth();if(!a||!window.CSKGoogle){say('Could not reach the server. Check your connection or ad-blocker, then reload.','bad');return}
+ setBusy(true,true);say('Choose your Google account\u2026');
+ CSKGoogle.signIn(a).then(function(r){
+  if(r.cancelled){setBusy(false);say('')}
+  else if(r.redirecting)say('Opening Google\u2026');
+  else say('Signing in\u2026')
+ }).catch(fail)}
 async function emailLogin(){
  if(busy)return;if(needTerms())return;
  var a=getAuth(),email=em.value.trim(),pass=pw.value;
@@ -80,6 +83,20 @@ tm.addEventListener('click',function(e){if(e.target===tm)tm.hidden=true});
 /* the game's keyboard handlers must not see typing on this screen */
 ['keydown','keyup'].forEach(function(n){root.addEventListener(n,function(e){e.stopPropagation()})});
 
+/* ---------- small full-screen button ---------- */
+(function(){var b=$('lg-fs'),de=document.documentElement;
+ var req=de.requestFullscreen||de.webkitRequestFullscreen||de.msRequestFullscreen;
+ var ext=document.exitFullscreen||document.webkitExitFullscreen||document.msExitFullscreen;
+ if(!req){b.hidden=true;return}
+ function isFs(){return !!(document.fullscreenElement||document.webkitFullscreenElement||document.msFullscreenElement)}
+ function sync(){var on=isFs();b.classList.toggle('on',on);b.setAttribute('aria-pressed',on);var t=on?'Exit full screen':'Enter full screen';b.setAttribute('aria-label',t);b.title=t}
+ ['fullscreenchange','webkitfullscreenchange','MSFullscreenChange'].forEach(function(n){document.addEventListener(n,sync)});
+ b.addEventListener('click',function(){
+  if(isFs()){try{var p=ext&&ext.call(document);if(p&&p.catch)p.catch(function(){})}catch(e){}}
+  else if(window.CSKFullscreen)window.CSKFullscreen.enter();
+  else{try{var q=req.call(de);if(q&&q.catch)q.catch(function(){})}catch(e){}}});
+ sync()})();
+
 /* ---------- when to show the screen ---------- */
 (function(){var a=getAuth();
  if(!a){setTimeout(function(){show();say('Could not reach the server. Check your connection or ad-blocker, then reload.','bad')},1500);return}
@@ -89,7 +106,7 @@ tm.addEventListener('click',function(e){if(e.target===tm)tm.hidden=true});
 
 /* ---------- called by game.js ---------- */
 var hasPassword=function(u){return !!(u&&u.providerData&&u.providerData.some(function(p){return p.providerId==='password'}))};
-function ready(){done=true;setBusy(false);say('');try{CSKBoot.ensure()}catch(e){}hide();try{window.CSKFullscreen&&CSKFullscreen.allow()}catch(e){}}
+function ready(){done=true;setBusy(false);say('');try{CSKBoot.ensure()}catch(e){}hide()}
 
 /* The popup. o = {user, claim, cleanName, nameRe, needName, needPw, name}. Resolves with the locked name ('' if none). */
 function ask(o){return new Promise(function(resolve){

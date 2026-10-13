@@ -5,12 +5,10 @@
      - the 2 MB sound bank is not loaded and no audio engine is created
    After login (Firebase reports a user): the sound bank and the remaining art load, then the home screen unlocks.
    Returning players (saved account) skip the gate and load everything up front, as before.
-   Google sign-in itself runs in a separate tab (popup); while that tab is open this page holds a Web Lock so the
-   browser is less likely to freeze/discard the waiting game tab. (Best effort: a browser or OS under memory
-   pressure can still close any background tab; the page is kept small so that is unlikely.) */
+   Google sign-in itself is in google-auth.js (account chooser popup). */
 (function(){
 'use strict';
-var root=document.documentElement,pre=false,started=false,done=false,loaderOn=false,rel=null,relT=0;
+var root=document.documentElement,pre=false,started=false,done=false,loaderOn=false;
 try{pre=!localStorage.getItem('ar-acct')}catch(e){}
 window.CSK_PRE=pre;if(pre)root.classList.add('csk-pre');
 
@@ -18,15 +16,11 @@ function loadScript(src){return new Promise(function(res,rej){var s=document.cre
 function sounds(){return loadScript('sfx-data.js').then(function(){try{window.CSK_decodeSounds&&window.CSK_decodeSounds()}catch(e){}}).catch(function(){})}
 function hero(){var im=document.querySelector('.hs-bg');if(im&&!im.getAttribute('src'))im.src=(window.CSKAssets&&CSKAssets.url('home-art2.jpg'))||'home-art2.jpg'}
 
-function release(){}
-function hold(){}
-
 /* ---- unlock ---- */
 function finish(){
  if(done)return;done=true;window.CSK_PRE=false;root.classList.remove('csk-pre');hero();
  if(loaderOn){loaderOn=false;try{CSKLoad.hide()}catch(e){}}}
 function unlock(){
- release();
  if(!pre||started)return;started=true;
  var jobs=[sounds()];
  try{jobs.push(CSKAssets.preload(function(){},'main').catch(function(){}))}catch(e){}
@@ -37,7 +31,7 @@ function ensure(){
  if(!pre||done)return;if(!started)unlock();
  try{CSKLoad.show();loaderOn=true}catch(e){}}
 
-window.CSKBoot={hold:hold,release:release,unlock:unlock,ensure:ensure,isPre:function(){return pre&&!done}};
+window.CSKBoot={unlock:unlock,ensure:ensure,isPre:function(){return pre&&!done}};
 
 document.addEventListener('DOMContentLoaded',function(){
  if(!pre){hero();sounds();return}

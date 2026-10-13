@@ -13,13 +13,8 @@
   /* browser can't do it (e.g. iPhone Safari): hide the button, nothing else to do */
   if(!req){ if(btn) btn.hidden=true; return; }
 
-  /* NO full screen on the login screen: it stays blocked until login.js calls CSKFullscreen.allow()
-     (after a sign-in / sign-up is complete, or a saved account is restored). */
-  var allowed=false;
-  function allow(){ allowed=true; enter(); }   /* the enter() here is best-effort; the player's next tap does it for sure */
-
   function enter(){
-    if(!allowed||isFs()) return;
+    if(isFs()) return;
     try{
       var p=req.call(de);
       var coarse=window.matchMedia&&window.matchMedia('(pointer:coarse)').matches;
@@ -93,7 +88,7 @@
   /* waiting room: READY / START / the countdown overlay are real taps too, so full screen is requested there as well
      (the 15 s countdown itself is not a tap, so it can't ask) */
   hook('lob-ready');hook('lob-start');hook('lob-count');
-  window.CSKFullscreen={enter:enter,isFs:isFs,allow:allow};
+  window.CSKFullscreen={enter:enter,isFs:isFs};
   /* Create Room: skip when signed-out/locked or busy (the click will just be rejected) */
   hook('host',function(el){ return !el.disabled&&!el.classList.contains('lob-locked-btn'); });
   /* Join: only when a 5-character room code has been typed */

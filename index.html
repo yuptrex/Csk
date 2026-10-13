@@ -119,6 +119,10 @@
 <div id="login" hidden role="dialog" aria-modal="true" aria-label="Sign in">
   <img class="lg-bg" src="login-bg.jpg" alt="Clash of Super Knights - sign in" draggable="false" decoding="sync">
   <div class="lg-ui">
+    <button class="lg-fs" id="lg-fs" type="button" aria-label="Enter full screen" aria-pressed="false" title="Full screen">
+      <svg class="f-ex" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5V4h5.5M14.5 4H20v5.5M20 14.5V20h-5.5M9.5 20H4v-5.5"/></svg>
+      <svg class="f-co" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 4v5.5H4M20 9.5h-5.5V4M14.5 20v-5.5H20M4 14.5h5.5V20"/></svg>
+    </button>
     <button class="lg-a lg-btn" id="lg-google" type="button" aria-label="Sign in with Google" style="--x:601;--y:299;--w:471;--h:71"><img src="login-btn-google.png" alt="" draggable="false"></button>
     <form id="lg-form" novalidate autocomplete="on">
       <div class="lg-a lg-fld" style="--x:602;--y:448;--w:469;--h:62"><input class="lg-in" id="lg-em" name="username" type="email" inputmode="email" autocomplete="username" autocapitalize="off" spellcheck="false" placeholder="Gmail address" aria-label="Gmail address"></div>
@@ -183,6 +187,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script>window.__cskProg&&__cskProg(68)</script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="google-auth.js"></script>   <!-- Google sign-in: account chooser popup -->
 <script>window.__cskProg&&__cskProg(78)</script>
 <!-- Game logic (unmodified, concatenated from the original inline scripts in original order) -->
 <script src="home-fx.js"></script><script src="home-anim.js"></script><script src="clouds.js"></script>
