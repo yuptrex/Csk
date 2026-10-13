@@ -1,6 +1,6 @@
 /* Locks the page like a native app: no zoom, no long-press menu, no text/image selection or dragging (inputs stay editable). */
 (function(){
-var ed=function(t){return t&&t.closest&&t.closest('input,textarea,[contenteditable="true"]')},o={passive:false};
+var ed=function(t){return t&&t.closest&&t.closest('input,textarea,[contenteditable="true"],#login,#sp-pop')},o={passive:false};
 ['gesturestart','gesturechange','gestureend'].forEach(function(n){document.addEventListener(n,function(e){e.preventDefault()},o)});
 document.addEventListener('touchmove',function(e){if(e.touches&&e.touches.length>1)e.preventDefault()},o);
 document.addEventListener('touchstart',function(e){if(e.touches&&e.touches.length>1)e.preventDefault()},o);

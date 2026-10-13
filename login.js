@@ -47,10 +47,11 @@ function show(){if(done)return;try{window.CSKFullscreen&&CSKFullscreen.block()}c
 function hide(){root.classList.add('lg-out');document.body.classList.remove('lg-open');setTimeout(function(){if(done)root.hidden=true},380)}
 
 /* ---------- sign in ---------- */
-function fail(e){setBusy(false);var c=e&&e.code||'';if(c==='auth/popup-closed-by-user'||c==='auth/cancelled-popup-request'){say('');return}say(errText(e),'bad')}
+function fail(e){setBusy(false);var c=e&&e.code||'';if(c==='auth/popup-closed-by-user'||c==='auth/cancelled-popup-request'){say('Google window was closed before finishing. Tap Sign in with Google and pick your account.','bad');return}say(errText(e),'bad')}
 async function google(){
  if(busy||needTerms())return;
  var a=getAuth();if(!a){say('Could not reach the server. Check your connection or ad-blocker, then reload.','bad');return}
+ try{window.CSKFullscreen&&CSKFullscreen.block()}catch(x){}
  setBusy(true);say('Opening Google\u2026');
  var p=new firebase.auth.GoogleAuthProvider();p.setCustomParameters({prompt:'select_account'});
  try{await a.signInWithPopup(p);say('Signing in\u2026')}
