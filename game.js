@@ -278,7 +278,7 @@ Object.defineProperty(cx,'shadowColor',{configurable:true,get(){return _sc.get.c
 let upq=0,upOpen=false,cc=0,dpr=1,S=1,UIS=1,sim=null,net=null,myId='p'+Math.random().toString(36).slice(2,8),myName='Player',myHue=Math.random()*360|0;
 let snap={p:[],b:[],k:[],w:null},snapAt=0,netEv=[],views={},parts=[],rings=[],texts=[],shake=0,flash=0,hitm=0,mute=false,t0=0;
 const cam={x:MW/2,y:MH/2},keys={},M={x:0,y:0,down:false},ST={mv:null,aim:null,fire:null,dash:0,rel:0};
-let paused=false,lockId='',selLv=1,beams=[],conf=[],hpS=100,healAt=-1e9,liveAt=-1e9,deadSince=0,wasAlive=null,winT=0,confDone=0,specId=null;
+let paused=false,lockId='',selLv=1,beams=[],conf=[],hpS=100,healAt=-1e9,liveAt=-1e9,deadSince=0,wasAlive=null,winT=0,confDone=0,specId=null,vsLoadShown=0;
 let rScale=1;
 function rs(){dpr=Math.max(.5,Math.min(devicePixelRatio||1,2)*rScale);cv.width=Math.max(1,Math.round(innerWidth*dpr));cv.height=Math.max(1,Math.round(innerHeight*dpr));cv.style.width=innerWidth+'px';cv.style.height=innerHeight+'px';S=Math.min(innerWidth/1000,innerHeight/620);UIS=Math.max(.64,Math.min(1,Math.min(innerWidth/980,innerHeight/560)));try{document.documentElement.style.setProperty("--uis",UIS.toFixed(3));if(typeof uisApply=="function")uisApply()}catch(e){}}
 addEventListener('resize',rs);rs();
@@ -1289,7 +1289,7 @@ function hudFx(m,now,W,H,F,dt){
  if(m&&m.al&&lt>=0&&lt<.9){const k=lt/.9;cx.fillStyle=`rgba(255,255,255,${.55*(1-k)*(1-k)})`;cx.fillRect(0,0,W,H);cx.strokeStyle=`hsla(${m.hue},95%,70%,${1-k})`;cx.lineWidth=8*(1-k)+1;cx.beginPath();cx.arc(W/2,H/2,Math.max(1,k*Math.max(W,H)*.6),0,6.28);cx.stroke()}
  if(m&&m.al&&m.inv>0&&!snap.w){const g=cx.createRadialGradient(W/2,H/2,H*.35,W/2,H/2,H*.85);g.addColorStop(0,`hsla(${m.hue},95%,65%,0)`);g.addColorStop(1,`hsla(${m.hue},95%,65%,${.28*Math.min(1,m.inv/.5)})`);cx.fillStyle=g;cx.fillRect(0,0,W,H)}
  if(m&&!m.al&&!snap.w)deathUI(m,now,W,H,F);
- if(m&&snap.w&&snap.w.id==myId&&window.VS){VS.show(snap,myId);$('home').hidden=true}else{window.VS&&VS.hide();if(m&&snap.w)roundFx((now-winT)/1000,snap.w.id==myId,W,H,F,dt,snap.w,m);else $('home').hidden=true}
+ if(m&&snap.w&&snap.w.id==myId&&window.VS){if(!vsLoadShown){vsLoadShown=1;window.CSKLoad&&CSKLoad.show();setTimeout(function(){VS.show(snap,myId);window.CSKLoad&&CSKLoad.hide()},260)}$('home').hidden=true}else{vsLoadShown=0;window.VS&&VS.hide();if(m&&snap.w)roundFx((now-winT)/1000,snap.w.id==myId,W,H,F,dt,snap.w,m);else $('home').hidden=true}
  if(conf.length){for(const q of conf){q.vy+=520*dt;q.vx*=1-1.1*dt;q.x+=q.vx*dt;q.y+=q.vy*dt;q.r+=q.vr*dt;q.l-=dt}conf=conf.filter(q=>q.y<H+20&&q.l>0);
   for(const q of conf){cx.save();cx.translate(q.x,q.y);cx.rotate(q.r);cx.scale(1,Math.cos(q.r*2));cx.fillStyle=q.c;cx.fillRect(-q.w/2,-q.h/2,q.w,q.h);cx.restore()}}}
 /* Professional shell: sound toggle, fullscreen, error reporting */
@@ -1382,7 +1382,15 @@ function askName(pre){if(askP)return askP;
  return askP}
 async function settleName(pv){let cs=null,den=false;
  try{cs=(await ref('callsign').once('value')).val()}catch(e){if(isDenied(e))den=true;else throw e}
- if(cs&&cs.name){lockName(cleanName(cs.name));return}
+ const hasName=!!(cs&&cs.name);
+ if(hasName)lockName(cleanName(cs.name));
+ const L=window.CSKLogin;
+ if(L){ /* new login screen: ask for a permanent name and a password (password = email/password login linked to this Google account) */
+  if(den&&!hasName)console.warn('callsign: database rules do not allow users/<uid>/callsign');
+  else{const needPw=!L.hasPassword(user);
+   if(!hasName||needPw){const n=await L.ask({user:user,claim:claim,cleanName:cleanName,nameRe:NAME_RE,needName:!hasName,needPw:needPw,name:hasName?locked:''});if(n)lockName(n)}}
+  L.ready();return}
+ if(hasName)return;
  if(den){console.warn('callsign: database rules do not allow users/<uid>/callsign');return}
  const nm=$('nm'),n=await askName((pv&&pv.name)||(nm&&nm.value)||'');if(n)lockName(n)}
 

@@ -21,8 +21,11 @@
 <link rel="stylesheet" href="theme-hud.css">
 <link rel="stylesheet" href="home-image.css">
 <link rel="stylesheet" href="theme-lobby.css">
+<link rel="stylesheet" href="login.css">
 <link rel="preload" as="image" href="loading-bg.jpg" fetchpriority="high">
 <link rel="preload" as="image" href="home-bg.jpg">
+<link rel="prefetch" as="image" href="login-bg.jpg">
+<link rel="prefetch" as="image" href="setup-card.png">
 <link rel="prefetch" as="image" href="lobby-bg.jpg">
 </head><body>
 <!-- Loading splash: covers first paint while fonts/Firebase/game script initialize.
@@ -43,10 +46,12 @@
   </div>
 </div>
 <script src="loading.js"></script>
+<script src="asset-cache.js"></script>
 <script>
 /* Loading screen progress: real checkpoints are reported by __cskProg(n) between the big script loads below;
-   in between, the bar creeps forward so it never looks frozen. It reaches 100% on window "load", then fades out.
-   It can never block play: a hard safety timeout closes it even if "load" never fires. */
+   in between, the bar creeps forward so it never looks frozen. It reaches 100% once window "load" fires
+   AND the local asset cache finishes, then fades out. It can never block play: a hard safety timeout
+   closes it even if those never fire. */
 (function(){
   var t0=Date.now(),MIN_MS=900,target=0,shown=0,closing=0,fill=document.getElementById('sp-fill'),pct=document.getElementById('sp-pct'),el=document.getElementById('csk-splash');
   function paint(){var p=Math.round(shown);fill.style.width=shown+'%';pct.textContent=p+'%'}
@@ -60,9 +65,12 @@
     if(closing&&shown>=99.6&&age>=MIN_MS){clearInterval(iv);shown=100;paint();setTimeout(function(){el.classList.add('csk-hide');if(stopTips)setTimeout(stopTips,600)},260)}
   },33);
   var stopTips=window.CSKTips?CSKTips.attach(document.getElementById('sp-tip')):null;
-  function finish(){closing=1}
-  if(document.readyState==='complete')finish();else window.addEventListener('load',finish);
-  setTimeout(finish,7000);  /* safety net */
+  var winLoaded=document.readyState==='complete',assetsLoaded=false;
+  function maybeFinish(){if(winLoaded&&assetsLoaded)closing=1}
+  if(winLoaded){}else window.addEventListener('load',function(){winLoaded=true;maybeFinish()});
+  if(window.CSKAssets)CSKAssets.preload(function(done,total){__cskProg(20+70*done/total)}).then(function(){assetsLoaded=true;maybeFinish()});
+  else assetsLoaded=true;
+  setTimeout(function(){closing=1},7000);  /* safety net */
 })();
 </script>
 <canvas id="c"></canvas><div id="kf"></div><div id="sb" hidden></div><div id="bc"></div><div id="msg"></div><div id="rc" hidden title="Tap to copy"></div><button id="home" hidden>BACK TO HOME</button><div id="rot"><div class="ph"></div>Rotate your phone to landscape to play</div>
@@ -91,6 +99,41 @@
 </div>
 <div hidden><div class="h-av" id="acav">G</div><b id="acn">Guest</b><small id="acs"></small><button id="l1" class="on" type="button">ARENA</button><button id="l2" type="button">FORTRESS</button><button class="h-ico" id="set" type="button">BUTTON LAYOUT</button><button class="h-ico" id="mt" type="button">SOUND: ON</button><button class="h-ico" id="fs" type="button">FULLSCREEN</button><div id="hk"></div><div id="tip"></div></div>
 </div></div>
+
+<!-- Login screen: only Google sign-in or Gmail + password. Shown whenever nobody is signed in. -->
+<div id="login" hidden role="dialog" aria-modal="true" aria-label="Sign in">
+  <img class="lg-bg" src="login-bg.jpg" alt="Clash of Super Knights - sign in" draggable="false" decoding="sync">
+  <div class="lg-ui">
+    <button class="lg-fs" id="lg-fs" type="button" aria-label="Enter full screen" aria-pressed="false" title="Full screen">
+      <svg class="f-ex" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5V4h5.5M14.5 4H20v5.5M20 14.5V20h-5.5M9.5 20H4v-5.5"/></svg>
+      <svg class="f-co" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 4v5.5H4M20 9.5h-5.5V4M14.5 20v-5.5H20M4 14.5h5.5V20"/></svg>
+    </button>
+    <button class="lg-a lg-btn" id="lg-google" type="button" aria-label="Sign in with Google" style="--x:601;--y:299;--w:471;--h:71"><img src="login-btn-google.png" alt="" draggable="false"></button>
+    <form id="lg-form" novalidate autocomplete="on">
+      <div class="lg-a lg-fld" style="--x:602;--y:448;--w:469;--h:62"><input class="lg-in" id="lg-em" name="username" type="email" inputmode="email" autocomplete="username" autocapitalize="off" spellcheck="false" placeholder="Gmail address" aria-label="Gmail address"></div>
+      <div class="lg-a lg-fld lg-pw" style="--x:602;--y:528;--w:469;--h:62"><input class="lg-in" id="lg-pw" name="password" type="password" autocomplete="current-password" placeholder="Password" aria-label="Password">
+        <button class="lg-eye" id="lg-eye" type="button" aria-label="Show password" aria-pressed="false">
+          <svg class="e-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M1.8 12S5.6 5.2 12 5.2 22.2 12 22.2 12 18.4 18.8 12 18.8 1.8 12 1.8 12z"/><circle cx="12" cy="12" r="3.2"/></svg>
+          <svg class="e-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M1.8 12S5.6 5.2 12 5.2c2 0 3.8.7 5.3 1.7M22.2 12S18.4 18.8 12 18.8c-2 0-3.8-.7-5.3-1.7"/><circle cx="12" cy="12" r="3.2"/><path d="M3.5 3.5l17 17"/></svg>
+        </button></div>
+      <button class="lg-a lg-btn is-off" id="lg-go" type="submit" aria-label="Login" aria-disabled="true" style="--x:601;--y:617;--w:471;--h:69"><img src="login-btn-go.png" alt="" draggable="false"></button>
+    </form>
+    <label class="lg-a lg-terms" id="lg-terms" style="--x:605;--y:705;--w:466;--h:33"><input type="checkbox" id="lg-tc"><span class="lg-box"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span>I agree to the <a id="lg-tl" role="button" tabindex="0">Terms and Conditions</a></span></label>
+    <div class="lg-a lg-msg" id="lg-msg" role="alert" style="--x:602;--y:744;--w:469;--h:40"></div>
+  </div>
+  <div class="lg-modal" id="lg-tm" hidden role="dialog" aria-modal="true" aria-label="Terms and Conditions">
+    <div class="lg-modal-box"><h2>TERMS AND CONDITIONS</h2>
+      <ul>
+        <li>Play fair: no cheating, hacks, exploits or abusing bugs.</li>
+        <li>Be respectful to other players in names and in rooms.</li>
+        <li>Your account is yours. Keep your password private; you are responsible for activity on it.</li>
+        <li>Your name is permanent once you set it, on every device.</li>
+        <li>Your name, password, stats and settings are stored in your account so you can sign in on other devices.</li>
+        <li>Accounts that break these rules can be limited or removed.</li>
+      </ul>
+      <button id="lg-tx" type="button">OK</button></div>
+  </div>
+</div>
 
 <!-- Room waiting lobby: shown after Create Room / Join Room, before the match actually starts.
      Pure additive overlay — does not touch any id/class the core game script reads. The match
@@ -143,5 +186,6 @@ window.CSK_RELAY_URL="";</script>
 <!-- Room waiting lobby: additive layer, loads after game.js so it can call the game's own start() -->
 <script src="lobby-fx.js"></script>
 <script src="lobby.js"></script>
+<script src="login.js"></script>
 <script>window.__cskProg&&__cskProg(97)</script>
 </body></html>
