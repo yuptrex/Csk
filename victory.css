@@ -4,11 +4,11 @@
 @keyframes vsin{from{opacity:0}to{opacity:1}}
 #vs-st{position:absolute;left:0;top:0;width:1600px;height:983px;transform-origin:0 0;background:url(victory-bg.jpg) 0 0/100% 100%;font-family:'Cinzel','Palatino Linotype',Georgia,serif;color:#f3e6c4}
 #vs-st>*{position:absolute}
-.rpic{left:693px;width:40px;height:40px;border-radius:50%;background:#1a2233 center/cover;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:20px;color:#ffd47a;box-shadow:0 0 0 2px #c8921f}
+.rpic{left:693px;width:40px;height:40px;border-radius:50%;background:#1a2233 center/cover no-repeat;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:20px;color:#ffd47a;box-shadow:0 0 0 2px #c8921f}
 .nm{left:742px;width:410px;height:38px;line-height:38px;font-weight:700;font-size:21px;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 2px 4px #000,0 0 10px rgba(255,190,60,.25)}
 .nm.me{color:#ffe08a;text-shadow:0 0 10px rgba(255,190,50,.8),0 2px 4px #000}
 .kl{left:1218px;width:122px;height:38px;line-height:38px;text-align:center;font-weight:900;font-size:24px;color:#ffd75a;text-shadow:0 2px 4px #000,0 0 10px rgba(255,190,40,.6)}
-#vs-pic{left:290px;top:422px;width:150px;height:150px;border-radius:50%;background:#1a2233 center/cover;display:flex;align-items:center;justify-content:center;font-size:72px;font-weight:900;color:#ffc83a;overflow:visible}
+#vs-pic{left:290px;top:422px;width:150px;height:150px;border-radius:50%;background:#1a2233 center/cover no-repeat;display:flex;align-items:center;justify-content:center;font-size:72px;font-weight:900;color:#ffc83a;overflow:visible}
 #vs-pic:before{content:"";position:absolute;inset:-9px;border-radius:50%;background:conic-gradient(from 0deg,transparent,rgba(255,225,110,.95),transparent 30%);-webkit-mask:radial-gradient(circle,transparent 66%,#000 69%,#000 78%,transparent 80%);mask:radial-gradient(circle,transparent 66%,#000 69%,#000 78%,transparent 80%);animation:vrot 2.2s linear infinite;pointer-events:none}
 @keyframes vrot{to{transform:rotate(360deg)}}
 #vs-pn{left:222px;top:596px;width:280px;height:50px;display:flex;align-items:center;justify-content:center;font-family:'Cinzel Decorative','Cinzel',serif;font-weight:700;font-size:23px;letter-spacing:1px;color:#ffe9a8;overflow:hidden;white-space:nowrap;text-shadow:0 0 12px rgba(255,190,60,.7),0 2px 4px #000}

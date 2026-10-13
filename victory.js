@@ -8,9 +8,9 @@ let root,st,on=0,pi=0,pt=0;
 const BG=new Image();BG.src='victory-bg.jpg';if(BG.decode)BG.decode().catch(()=>{});
 if(document.fonts&&document.fonts.load){['700 20px "Cinzel"','900 20px "Cinzel"','700 20px "Cinzel Decorative"','900 20px "Cinzel Decorative"'].forEach(f=>document.fonts.load(f).catch(()=>{}))}
 const el=(c,t,p)=>{const e=document.createElement(t||'div');if(c)e.className=c;(p||st).appendChild(e);return e};
-function fit(){if(!root)return;const k=Math.min(innerWidth/W,innerHeight/H);st.style.transform=`translate(${(innerWidth-W*k)/2}px,${(innerHeight-H*k)/2}px) scale(${k})`}
+function fit(){if(!root)return;st.style.transform=`scale(${innerWidth/W},${innerHeight/H})`}
 function pic(e,url,name,hue){e.style.backgroundImage='';e.style.background=`hsl(${hue||40} 60% 30%)`;e.textContent=(name||'?')[0].toUpperCase();
- if(!url)return;const im=new Image();im.referrerPolicy='no-referrer';im.onload=()=>{e.style.backgroundImage=`url("${url.replace(/"/g,'')}")`;e.textContent=''};im.src=url}
+ if(!url)return;const im=new Image();im.referrerPolicy='no-referrer';im.onload=()=>{e.style.backgroundImage=`url("${url.replace(/"/g,'')}")`;e.style.backgroundSize='cover';e.style.backgroundRepeat='no-repeat';e.style.backgroundPosition='center';e.textContent=''};im.src=url}
 function photoOf(p,myId){return p.id==myId?((window.ARA&&ARA.account()||{}).photo||p.photo||''):(p.photo||'')}
 function build(snap,myId){
  if(!root){root=el('','div',document.body);root.id='vs';st=document.createElement('div');st.id='vs-st';root.appendChild(st);addEventListener('resize',fit)}
