@@ -18,30 +18,8 @@ function loadScript(src){return new Promise(function(res,rej){var s=document.cre
 function sounds(){return loadScript('sfx-data.js').then(function(){try{window.CSK_decodeSounds&&window.CSK_decodeSounds()}catch(e){}}).catch(function(){})}
 function hero(){var im=document.querySelector('.hs-bg');if(im&&!im.getAttribute('src'))im.src=(window.CSKAssets&&CSKAssets.url('home-art2.jpg'))||'home-art2.jpg'}
 
-/* ---- keep-alive while the account tab is open ---- */
-function hold(){
- if(rel||!navigator.locks||!navigator.locks.request)return;
- try{navigator.locks.request('csk-signin-alive',function(){return new Promise(function(r){rel=r})}).catch(function(){});
-  clearTimeout(relT);relT=setTimeout(release,180000)}catch(e){}}
-function release(){clearTimeout(relT);if(rel){var r=rel;rel=null;try{r()}catch(e){}}}
-
-/* ---- Google account chooser in a separate browser tab ----
-   Opens auth-tab.html in a normal new tab (it forwards straight to Google's account chooser, then closes itself).
-   This tab just waits in the background; Firebase syncs the sign-in across tabs. Returns false if the browser
-   refused to open a tab, so the caller can fall back to the Firebase popup. */
-function tab(onCancel){
- return false;   /* separate-tab sign-in disabled: Google sign-in uses the normal popup (it was reported as "cancelled") */
- if(window.CSK_REDIRECT)return false;
- var w=null;try{w=window.open('auth-tab.html','_blank')}catch(e){}
- if(!w||w.closed)return false;
- hold();
- var t0=Date.now(),gone=0,iv=setInterval(function(){
-  var u=null;try{u=firebase.auth().currentUser}catch(e){}
-  if(u){clearInterval(iv);try{w.close()}catch(e){}try{window.focus()}catch(e){}release();return}
-  if(w.closed){if(!gone)gone=Date.now();else if(Date.now()-gone>4000){clearInterval(iv);release();if(onCancel)onCancel()}}
-  if(Date.now()-t0>300000){clearInterval(iv);release()}
- },500);
- return true}
+function release(){}
+function hold(){}
 
 /* ---- unlock ---- */
 function finish(){
@@ -59,7 +37,7 @@ function ensure(){
  if(!pre||done)return;if(!started)unlock();
  try{CSKLoad.show();loaderOn=true}catch(e){}}
 
-window.CSKBoot={tab:tab,hold:hold,release:release,unlock:unlock,ensure:ensure,isPre:function(){return pre&&!done}};
+window.CSKBoot={hold:hold,release:release,unlock:unlock,ensure:ensure,isPre:function(){return pre&&!done}};
 
 document.addEventListener('DOMContentLoaded',function(){
  if(!pre){hero();sounds();return}

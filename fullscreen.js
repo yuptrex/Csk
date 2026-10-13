@@ -13,10 +13,13 @@
   /* browser can't do it (e.g. iPhone Safari): hide the button, nothing else to do */
   if(!req){ if(btn) btn.hidden=true; return; }
 
-  /* NO full screen before login: it stays blocked until CSKLogin.ready() (signed in / signed up) calls allow() */
-  var okFs=false;
+  /* NO full screen on the login screen: it stays blocked until login.js calls CSKFullscreen.allow()
+     (after a sign-in / sign-up is complete, or a saved account is restored). */
+  var allowed=false;
+  function allow(){ allowed=true; enter(); }   /* the enter() here is best-effort; the player's next tap does it for sure */
+
   function enter(){
-    if(!okFs||isFs()) return;
+    if(!allowed||isFs()) return;
     try{
       var p=req.call(de);
       var coarse=window.matchMedia&&window.matchMedia('(pointer:coarse)').matches;
@@ -30,8 +33,6 @@
       }
     }catch(e){}
   }
-  function allow(){okFs=true;if(!userOff())enter()}
-  function block(){okFs=false;if(isFs())leave()}
   function leave(){
     try{ var p=ext&&ext.call(document); if(p&&p.catch) p.catch(function(){}); }catch(e){}
   }
@@ -55,13 +56,12 @@
   var GEST=['pointerup','mouseup','touchend','click','keydown'];
   function onGesture(e){
     if(e&&e.type==='keydown'&&e.key==='Escape') return;
-    if(!okFs) return;
     if(isFs()||userOff()){ if(isFs()) stopGest(); return; }
     enter();
   }
   function stopGest(){GEST.forEach(function(n){document.removeEventListener(n,onGesture,true)})}
   GEST.forEach(function(n){document.addEventListener(n,onGesture,true)});
-  if(false) enter();                  /* (full screen now starts only after login) works if the browser still allows it (e.g. after a tap on the previous page) */
+  if(!userOff()) enter();                  /* works if the browser still allows it (e.g. after a tap on the previous page) */
   ['fullscreenchange','webkitfullscreenchange','MSFullscreenChange'].forEach(function(n){
     document.addEventListener(n,function(){
       /* if full screen was dropped (player pressed Esc), start listening again so a later button press can re-enter */
@@ -93,7 +93,7 @@
   /* waiting room: READY / START / the countdown overlay are real taps too, so full screen is requested there as well
      (the 15 s countdown itself is not a tap, so it can't ask) */
   hook('lob-ready');hook('lob-start');hook('lob-count');
-  window.CSKFullscreen={enter:enter,isFs:isFs,allow:allow,block:block};
+  window.CSKFullscreen={enter:enter,isFs:isFs,allow:allow};
   /* Create Room: skip when signed-out/locked or busy (the click will just be rejected) */
   hook('host',function(el){ return !el.disabled&&!el.classList.contains('lob-locked-btn'); });
   /* Join: only when a 5-character room code has been typed */

@@ -43,15 +43,14 @@ function refresh(){var ok=tc.checked&&!busy&&em.value.trim()&&pw.value;go.classL
 function shake(){terms.classList.remove('shake');void terms.offsetWidth;terms.classList.add('shake');setTimeout(function(){terms.classList.remove('shake')},600)}
 function needTerms(){if(tc.checked)return false;say('Please agree to the Terms and Conditions first.','bad');shake();return true}
 
-function show(){if(done)return;try{window.CSKFullscreen&&CSKFullscreen.block()}catch(e){}root.hidden=false;root.classList.remove('lg-out');document.body.classList.add('lg-open')}
+function show(){if(done)return;root.hidden=false;root.classList.remove('lg-out');document.body.classList.add('lg-open')}
 function hide(){root.classList.add('lg-out');document.body.classList.remove('lg-open');setTimeout(function(){if(done)root.hidden=true},380)}
 
 /* ---------- sign in ---------- */
-function fail(e){setBusy(false);var c=e&&e.code||'';if(c==='auth/popup-closed-by-user'||c==='auth/cancelled-popup-request'){say('Google window was closed before finishing. Tap Sign in with Google and pick your account.','bad');return}say(errText(e),'bad')}
+function fail(e){setBusy(false);var c=e&&e.code||'';if(c==='auth/popup-closed-by-user'||c==='auth/cancelled-popup-request'){say('');return}say(errText(e),'bad')}
 async function google(){
  if(busy||needTerms())return;
  var a=getAuth();if(!a){say('Could not reach the server. Check your connection or ad-blocker, then reload.','bad');return}
- try{window.CSKFullscreen&&CSKFullscreen.block()}catch(x){}
  setBusy(true);say('Opening Google\u2026');
  var p=new firebase.auth.GoogleAuthProvider();p.setCustomParameters({prompt:'select_account'});
  try{await a.signInWithPopup(p);say('Signing in\u2026')}
@@ -81,8 +80,6 @@ tm.addEventListener('click',function(e){if(e.target===tm)tm.hidden=true});
 /* the game's keyboard handlers must not see typing on this screen */
 ['keydown','keyup'].forEach(function(n){root.addEventListener(n,function(e){e.stopPropagation()})});
 
-/* no full-screen button here: full screen is only allowed after login / sign up (see fullscreen.js) */
-
 /* ---------- when to show the screen ---------- */
 (function(){var a=getAuth();
  if(!a){setTimeout(function(){show();say('Could not reach the server. Check your connection or ad-blocker, then reload.','bad')},1500);return}
@@ -92,7 +89,7 @@ tm.addEventListener('click',function(e){if(e.target===tm)tm.hidden=true});
 
 /* ---------- called by game.js ---------- */
 var hasPassword=function(u){return !!(u&&u.providerData&&u.providerData.some(function(p){return p.providerId==='password'}))};
-function ready(){done=true;setBusy(false);say('');try{window.CSKFullscreen&&CSKFullscreen.allow()}catch(e){}try{CSKBoot.ensure()}catch(e){}hide()}
+function ready(){done=true;setBusy(false);say('');try{CSKBoot.ensure()}catch(e){}hide();try{window.CSKFullscreen&&CSKFullscreen.allow()}catch(e){}}
 
 /* The popup. o = {user, claim, cleanName, nameRe, needName, needPw, name}. Resolves with the locked name ('' if none). */
 function ask(o){return new Promise(function(resolve){
