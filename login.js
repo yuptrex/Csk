@@ -43,7 +43,7 @@ function refresh(){var ok=tc.checked&&!busy&&em.value.trim()&&pw.value;go.classL
 function shake(){terms.classList.remove('shake');void terms.offsetWidth;terms.classList.add('shake');setTimeout(function(){terms.classList.remove('shake')},600)}
 function needTerms(){if(tc.checked)return false;say('Please agree to the Terms and Conditions first.','bad');shake();return true}
 
-function show(){if(done)return;root.hidden=false;root.classList.remove('lg-out');document.body.classList.add('lg-open')}
+function show(){if(done)return;try{window.CSKFullscreen&&CSKFullscreen.block()}catch(e){}root.hidden=false;root.classList.remove('lg-out');document.body.classList.add('lg-open')}
 function hide(){root.classList.add('lg-out');document.body.classList.remove('lg-open');setTimeout(function(){if(done)root.hidden=true},380)}
 
 /* ---------- sign in ---------- */
@@ -80,19 +80,7 @@ tm.addEventListener('click',function(e){if(e.target===tm)tm.hidden=true});
 /* the game's keyboard handlers must not see typing on this screen */
 ['keydown','keyup'].forEach(function(n){root.addEventListener(n,function(e){e.stopPropagation()})});
 
-/* ---------- small full-screen button ---------- */
-(function(){var b=$('lg-fs'),de=document.documentElement;
- var req=de.requestFullscreen||de.webkitRequestFullscreen||de.msRequestFullscreen;
- var ext=document.exitFullscreen||document.webkitExitFullscreen||document.msExitFullscreen;
- if(!req){b.hidden=true;return}
- function isFs(){return !!(document.fullscreenElement||document.webkitFullscreenElement||document.msFullscreenElement)}
- function sync(){var on=isFs();b.classList.toggle('on',on);b.setAttribute('aria-pressed',on);var t=on?'Exit full screen':'Enter full screen';b.setAttribute('aria-label',t);b.title=t}
- ['fullscreenchange','webkitfullscreenchange','MSFullscreenChange'].forEach(function(n){document.addEventListener(n,sync)});
- b.addEventListener('click',function(){
-  if(isFs()){try{var p=ext&&ext.call(document);if(p&&p.catch)p.catch(function(){})}catch(e){}}
-  else if(window.CSKFullscreen)window.CSKFullscreen.enter();
-  else{try{var q=req.call(de);if(q&&q.catch)q.catch(function(){})}catch(e){}}});
- sync()})();
+/* no full-screen button here: full screen is only allowed after login / sign up (see fullscreen.js) */
 
 /* ---------- when to show the screen ---------- */
 (function(){var a=getAuth();
@@ -103,7 +91,7 @@ tm.addEventListener('click',function(e){if(e.target===tm)tm.hidden=true});
 
 /* ---------- called by game.js ---------- */
 var hasPassword=function(u){return !!(u&&u.providerData&&u.providerData.some(function(p){return p.providerId==='password'}))};
-function ready(){done=true;setBusy(false);say('');hide()}
+function ready(){done=true;setBusy(false);say('');try{window.CSKFullscreen&&CSKFullscreen.allow()}catch(e){}try{CSKBoot.ensure()}catch(e){}hide()}
 
 /* The popup. o = {user, claim, cleanName, nameRe, needName, needPw, name}. Resolves with the locked name ('' if none). */
 function ask(o){return new Promise(function(resolve){
@@ -125,9 +113,13 @@ function ask(o){return new Promise(function(resolve){
  if(!needPw){pp.disabled=true;pp.placeholder='Password already set'}
  function nameErr(){if(!needName)return '';var n=o.cleanName(nm.value);if(!n)return nm.value?'Name needs at least 3 characters.':'';return n.length<3?'Name needs at least 3 characters.':!o.nameRe.test(n)?'Name: letters, numbers, spaces and . _ - only.':''}
  function pwErr(){if(!needPw)return '';return pp.value&&pp.value.length<6?'Password needs at least 6 characters.':''}
- function valid(){var n=!needName||(o.cleanName(nm.value).length>=3&&o.nameRe.test(o.cleanName(nm.value)));var p=!needPw||pp.value.length>=6;return n&&p}
- function check(){var e=nameErr()||pwErr();if(!working)say2(e||HINT,e?'bad':'');var ok=valid()&&!working;btn.classList.toggle('is-off',!ok);btn.classList.toggle('on',ok);btn.setAttribute('aria-disabled',ok?'false':'true')}
- nm.addEventListener('input',check);pp.addEventListener('input',check);
+ var avail=null,availFor='',availT=0,availSeq=0;
+ function nameOk(){if(!needName)return true;var c=o.cleanName(nm.value);return c.length>=3&&o.nameRe.test(c)}
+ function valid(){var p=!needPw||pp.value.length>=6;if(!nameOk()||!p)return false;if(needName&&o.free&&avail===false&&availFor===o.cleanName(nm.value).toLowerCase())return false;return true}
+ function lookup(){clearTimeout(availT);avail=null;if(!needName||!o.free||!nameOk())return;var n=o.cleanName(nm.value),seq=++availSeq;availFor=n.toLowerCase();
+  availT=setTimeout(function(){if(!working)say2('Checking name\u2026','');o.free(n).then(function(ok){if(seq!==availSeq||working)return;avail=ok;if(ok===false)say2('That name is already taken. Choose another.','bad');else if(ok===true)say2('Name is available \u2713','ok');check()})},350)}
+ function check(){var e=nameErr()||pwErr();if(!working){if(e)say2(e,'bad');else if(needName&&avail===false&&availFor===o.cleanName(nm.value).toLowerCase())say2('That name is already taken. Choose another.','bad');else if(!(needName&&avail===true&&availFor===o.cleanName(nm.value).toLowerCase()))say2(HINT,'')}var ok=valid()&&!working;btn.classList.toggle('is-off',!ok);btn.classList.toggle('on',ok);btn.setAttribute('aria-disabled',ok?'false':'true')}
+ nm.addEventListener('input',function(){check();lookup()});pp.addEventListener('input',check);
  [nm,pp].forEach(function(i){i.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();btn.click()}})});
  q('#sp-eye').addEventListener('click',function(){var on=pp.type==='password';pp.type=on?'text':'password';this.classList.toggle('on',on);this.setAttribute('aria-pressed',on);this.setAttribute('aria-label',on?'Hide password':'Show password')});
  q('#sp-out').addEventListener('click',function(){var b=$('acbtn');if(b)b.click();else{try{auth&&auth.signOut()}catch(e){}location.reload()}});
@@ -154,7 +146,7 @@ function ask(o){return new Promise(function(resolve){
    var c=e&&e.code||'',den=String(c).toUpperCase().indexOf('PERMISSION')>=0||/permission[_ ]denied/i.test(String(e&&e.message||''));
    if(needPw)pp.disabled=false;if(needName)nm.readOnly=false;
    check();
-   say2(needPw?pwFail(e):den?'Names cannot be saved yet: the database rules do not allow users/<uid>/callsign.':'Could not reach the server. Check your connection and try again.','bad');
+   say2(c==='name-taken'?'That name is already taken. Choose another.':needPw?pwFail(e):den?'Names cannot be saved yet: the database rules do not allow users/<uid>/callsign.':'Could not reach the server. Check your connection and try again.','bad');
    return}
   say2('Saved \u2713','ok');
   try{navigator.vibrate&&navigator.vibrate([12,40,18])}catch(e){}

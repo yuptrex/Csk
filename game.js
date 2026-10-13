@@ -105,7 +105,7 @@ function setLevel(n){LV=n;SEED=n==1?1337:9001;for(const a of[WALLS,PKP,CHP,PKTY,
  CHP.push([2400,1600]);
  for(const qx of[0,1])for(const qy of[0,1]){for(const[x,y]of PB)PKP.push([qx?4800-x:x,qy?3200-y:y]);for(const[x,y]of CB)CHP.push([qx?4800-x:x,qy?3200-y:y])}
  ZN.push(...(n==2?[['OUTER RING',1200,800],['SALT FLATS',3600,800],['BONE YARD',1200,2400],['IRON GATE',3600,2400],['THE KEEP',2400,1250]]:[['DUST BOWL',1200,800],['GREEN ROW',3600,800],['STEEL YARD',1200,2400],['THE PIT',3600,2400],['PLAZA',2400,1100]]));
- for(let i=0;i<650;i++){const x=rng()*MW,y=rng()*MH,k=rng()*6|0,r=rng()*6.28,sc=.7+rng()*.8;if(!inWall(x,y))DEC.push({x,y,k,r,s:sc})}
+ for(let i=0;i<650;i++){const x=rng()*MW,y=rng()*MH,k=rng()*7|0,r=rng()*6.28,sc=.7+rng()*.8;if(!inWall(x,y))DEC.push({x,y,k,r,s:sc})}
  for(let i=0;i<70;i++)PAT.push({x:rng()*MW,y:rng()*MH,r:220+rng()*380,k:rng()*3|0});
  PKP.forEach((_,i)=>PKTY.push(['hp','smg','shield','shotgun','speed','rifle','hp','shield','smg'][i%9]));
  for(let i=0;i<30;i++){const ax=150+rng()*(MW-300),ay=150+rng()*(MH-300);for(let j=0;j<6;j++){const x=ax+(rng()-.5)*120,y=ay+(rng()-.5)*120;if(!inWall(x,y))CSP.push([x|0,y|0,1+(rng()*2|0)])}}
@@ -288,15 +288,20 @@ const SV={laser:.55,cannon:.8,sniper:.85,mag:.8,drums:.62,reload:.5,hitmarker:.5
  dash:.5,weapon:.6,heal:.6,shield:.6,speed:.55,coin:.38,chest:.75,upgrade:.65,spawn:.45,respawn:.7,tick:.5,heart:.8,ui:.5,
  victory:.9,defeat:.85,matchpoint:.6,firstblood:.85,streak2:.65,streak3:.75,streak4:.85,shutdown:.75,revenge:.75};
 let AC,MG,SB={},act=0,cnt={};
+/* The 2 MB sound bank is loaded only after login (boot-gate.js). Decode it once it exists AND the audio context exists, then drop the base64 text to free RAM. */
+function decodeBank(){const B=window.SFX_B64;if(!AC||!B)return;window.SFX_B64=null;
+ const G1=['laser','cannon','sniper','mag'],rk=k=>G1.includes(k)?0:k=='drums'?2:1;
+ for(const k of Object.keys(B).sort((a,b)=>rk(a)-rk(b))){try{const s=atob(B[k]),u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);
+  const pr=AC.decodeAudioData(u.buffer,b=>{SB[k]=b},()=>{});if(pr&&pr.catch)pr.catch(()=>{})}catch(e){}}}
+window.CSK_decodeSounds=decodeBank;
 function audioInit(){
- if(AC){if(AC.state=='suspended')AC.resume();return}
+ if(window.CSK_PRE)return;   /* nobody signed in yet: no audio engine, no sound bank */
+ if(AC){if(AC.state=='suspended')AC.resume();decodeBank();return}
  try{AC=new(window.AudioContext||window.webkitAudioContext)({latencyHint:"interactive"});MG=AC.createGain();MG.gain.value=.9;
   const cp=AC.createDynamicsCompressor();cp.threshold.value=-12;cp.knee.value=14;cp.ratio.value=4;cp.attack.value=.003;cp.release.value=.18;MG.connect(cp);cp.connect(AC.destination);
   AC.onstatechange=()=>{if(AC&&(AC.state=='suspended'||AC.state=='interrupted')){try{AC.resume()}catch(e){}}};
   try{const wb=AC.createBuffer(1,1,22050),ws=AC.createBufferSource();ws.buffer=wb;ws.connect(AC.destination);ws.start(0)}catch(e){}   // wake the audio hardware now, not on the first shot
-  const G1=['laser','cannon','sniper','mag'],rk=k=>G1.includes(k)?0:k=='drums'?2:1;
-  for(const k of Object.keys(SFX_B64).sort((a,b)=>rk(a)-rk(b))){const s=atob(SFX_B64[k]),u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);
-   try{const pr=AC.decodeAudioData(u.buffer,b=>{SB[k]=b},()=>{});if(pr&&pr.catch)pr.catch(()=>{})}catch(e){}}
+  decodeBank();
  }catch(e){AC=null}}
 function sfx(n,o){o=o||{};const b=SB[n];if(mute||!AC||!b)return;const vol=o.vol==null?1:o.vol,bk=n.replace(/\d$/,'');if(vol<(o.low?.06:.02))return;if(o.low&&(act>18||(cnt[bk]||0)>=3))return;
  const s=AC.createBufferSource();s.buffer=b;s.playbackRate.value=(o.rate||1)*(o.j===0?1:1+(Math.random()-.5)*(o.j||.06));
@@ -734,8 +739,8 @@ function start(mode,room){try{window.BFX&&BFX.reset()}catch(x){}audioInit();setT
 try{$('nm').value=localStorage.getItem('ar-name')||''}catch(e){}
 function pickLv(n){selLv=n;$('l1').classList.toggle('on',n==1);$('l2').classList.toggle('on',n==2);sfx('ui',{j:0})}$('l1').onclick=()=>pickLv(1);$('l2').onclick=()=>pickLv(2);
 selLv=Math.random()<.5?1:2; /* map is random: no map buttons on the home screen */
-try{const au=localStorage.getItem('ar-auto');if(au){localStorage.removeItem('ar-auto');pickLv(+au);setTimeout(()=>start('solo'),60)}}catch(e){}
-$('home').onclick=()=>{if(snap.w&&snap.w.id==myId&&sim&&!net&&LV<2)try{localStorage.setItem('ar-auto','2')}catch(e){}sfx('ui',{j:0});try{net&&net.send({t:'bye',id:myId})}catch(e){}setTimeout(()=>location.reload(),160)};$('solo').onclick=()=>start('solo');function goOnline(mode){audioInit();
+try{localStorage.removeItem('ar-auto')}catch(e){}   /* no more auto-start of level 2 after a win: Back to Home just goes home */
+$('home').onclick=()=>{sfx('ui',{j:0});try{net&&net.send({t:'bye',id:myId})}catch(e){}setTimeout(()=>location.reload(),160)};$('solo').onclick=()=>start('solo');function goOnline(mode){audioInit();
   if(!fbInit()){netNote('Could not load Firebase. Check your internet connection and reload.',1);return}
   const busy=b=>{$('host').disabled=b;$('join').disabled=b};
   if(mode=='host'){busy(1);$('msg').textContent='';waitUp(9000).then(()=>withTimeout(createRoomCode(),9000)).then(c=>{busy(0);start('host',c)}).catch(e=>{busy(0);netNote(netErr(e),1)});return}
@@ -831,6 +836,7 @@ function render(dt,now){if(snap.lv&&snap.lv!=LV)setLevel(snap.lv);if(!sim&&net)n
   else if(d.k==2){cx.fillStyle='#1c3a52';cx.beginPath();cx.ellipse(0,0,26,14,0,0,6.28);cx.fill();cx.strokeStyle='#3a6a8a55';cx.lineWidth=2;cx.stroke()}
   else if(d.k==3){cx.fillStyle='#1b3324';for(const[x,y,r]of[[0,0,12],[10,4,9],[-9,5,8]]){cx.beginPath();cx.arc(x,y,r,0,6.28);cx.fill()}cx.fillStyle='#24462f';cx.beginPath();cx.arc(-2,-3,6,0,6.28);cx.fill()}
   else if(d.k==4){cx.strokeStyle='#ffb02e30';cx.lineWidth=5;cx.beginPath();cx.moveTo(-22,8);cx.lineTo(0,-8);cx.lineTo(22,8);cx.stroke()}
+  else if(d.k==5){cx.strokeStyle='#5a4a3a';cx.lineWidth=2;cx.beginPath();cx.moveTo(0,10);cx.lineTo(0,-28);cx.stroke();cx.fillStyle='#b23a3a88';cx.beginPath();cx.moveTo(0,-28);cx.lineTo(16,-24);cx.lineTo(0,-18);cx.closePath();cx.fill()}
   else{cx.strokeStyle='#3a4856';cx.lineWidth=3;cx.beginPath();cx.arc(0,0,14,0,6.28);cx.stroke();cx.beginPath();cx.moveTo(-14,0);cx.lineTo(14,0);cx.moveTo(0,-14);cx.lineTo(0,14);cx.stroke()}
   cx.restore()}
  cx.fillStyle='#ffffff0a';cx.font='bold 120px "Trebuchet MS",sans-serif';cx.textAlign='center';for(const z of ZN)cx.fillText(z[0],z[1],z[2]);
@@ -1279,7 +1285,7 @@ function roundFx(t,won,W,H,F,dt,w,m){
   cx.textAlign='left';cx.fillStyle=isMe?'#fff':'#d4dde3';cx.fillText(p.name,tx+56,my);
   cx.textAlign='right';cx.fillStyle=isW?GOLD:'#e8eef2';cx.fillText(p.k,tx+tw-52,my);cx.fillStyle='#84949f';cx.fillText(p.d,tx+tw-8,my);cx.restore()});
  // back-to-home button (DOM) sits right under the ranking
- const hb=$('home');hb.hidden=false;hb.textContent=won&&sim&&!net&&LV<2?'NEXT LEVEL':'BACK TO HOME';hb.style.top=Math.min(H-54,ty+6+list.length*(rh+3)+12)+'px';hb.style.opacity=cl((t-1.2)*3,0,1);hb.style.pointerEvents=t>1.2?'auto':'none';
+ const hb=$('home');hb.hidden=false;hb.textContent='BACK TO HOME';hb.style.top=Math.min(H-54,ty+6+list.length*(rh+3)+12)+'px';hb.style.opacity=cl((t-1.2)*3,0,1);hb.style.pointerEvents=t>1.2?'auto':'none';
  cx.textBaseline='alphabetic';cx.globalAlpha=1}
 function hudFx(m,now,W,H,F,dt){
  if(m&&m.al&&m.hp<30&&!snap.w&&now-beatT>850){beatT=now;sfx('heart',{j:0})}
@@ -1335,7 +1341,19 @@ function lockName(n){locked=n;const nm=$('nm');
  if(nm){nm.value=n;nm.readOnly=true;nm.classList.add('cs-lock');nm.title='Your callsign is permanent';nm.setAttribute('aria-readonly','true')}
  LS('ar-name',n);const w=user||hint;if(w)LS('ar-cs',JSON.stringify({uid:w.uid,name:n}));
  const lb=document.querySelector('label[for="nm"]');if(lb&&!lb.querySelector('.cs-lk'))lb.insertAdjacentHTML('beforeend','<span class="cs-lk">'+LOCK_SVG+' PERMANENT</span>')}
-function claim(n){return new Promise((res,rej)=>{let fin=0;const t=setTimeout(()=>{if(!fin){fin=1;rej({code:'timeout'})}},9000);
+/* global unique-name index: callsigns/<lowercase name> = uid (first come, first served) */
+function nameKey(n){let s=String(n);try{s=s.normalize('NFKC')}catch(e){}return s.toLowerCase().replace(/[\s._\-]+/g,' ').trim().replace(/[.$#\[\]\/]/g,c=>'%'+c.charCodeAt(0).toString(16).toUpperCase())}
+const RESERVED=['player','guest','admin','moderator','csk','bot','system','server'];
+/* live check for the name popup: true = free (or already yours) */
+function nameFree(n){return new Promise(res=>{const k=nameKey(n);if(RESERVED.indexOf(k)>=0)return res(false);let fin=0;const t=setTimeout(()=>{if(!fin){fin=1;res(null)}},6000);
+ try{db.ref('callsigns/'+k).once('value',s=>{if(fin)return;fin=1;clearTimeout(t);const v=s.val();res(!v||(user&&v===user.uid))},()=>{if(!fin){fin=1;clearTimeout(t);res(null)}})}catch(e){if(!fin){fin=1;clearTimeout(t);res(null)}}})}
+function claimIdx(n){return new Promise((res,rej)=>{let fin=0;const t=setTimeout(()=>{if(!fin){fin=1;rej({code:'timeout'})}},9000);
+ try{db.ref('callsigns/'+nameKey(n)).transaction(cur=>(cur&&cur!==user.uid)?undefined:user.uid,(err,ok)=>{if(fin)return;fin=1;clearTimeout(t);if(err)rej(err);else if(!ok)rej({code:'name-taken'});else res()},false)}
+ catch(e){if(!fin){fin=1;clearTimeout(t);rej(e)}}})}
+async function claim(n){if(RESERVED.indexOf(nameKey(n))>=0)throw {code:'name-taken'};await claimIdx(n);const got=await claim0(n);
+ if(got&&nameKey(got)!==nameKey(n)){try{db.ref('callsigns/'+nameKey(n)).transaction(c=>c===user.uid?null:undefined)}catch(e){}}
+ return got}
+function claim0(n){return new Promise((res,rej)=>{let fin=0;const t=setTimeout(()=>{if(!fin){fin=1;rej({code:'timeout'})}},9000);
  try{ref('callsign').transaction(cur=>cur&&cur.name?undefined:{name:n,t:Date.now()},(err,ok,snap)=>{if(fin)return;fin=1;clearTimeout(t);if(err)rej(err);else{const v=snap&&snap.val();res(v&&v.name?String(v.name):n)}},false)}
  catch(e){if(!fin){fin=1;clearTimeout(t);rej(e)}}})}
 function askName(pre){if(askP)return askP;
@@ -1383,12 +1401,12 @@ function askName(pre){if(askP)return askP;
 async function settleName(pv){let cs=null,den=false;
  try{cs=(await ref('callsign').once('value')).val()}catch(e){if(isDenied(e))den=true;else throw e}
  const hasName=!!(cs&&cs.name);
- if(hasName)lockName(cleanName(cs.name));
+ if(hasName){lockName(cleanName(cs.name));claimIdx(cleanName(cs.name)).catch(()=>{})}
  const L=window.CSKLogin;
  if(L){ /* new login screen: ask for a permanent name and a password (password = email/password login linked to this Google account) */
   if(den&&!hasName)console.warn('callsign: database rules do not allow users/<uid>/callsign');
   else{const needPw=!L.hasPassword(user);
-   if(!hasName||needPw){const n=await L.ask({user:user,claim:claim,cleanName:cleanName,nameRe:NAME_RE,needName:!hasName,needPw:needPw,name:hasName?locked:''});if(n)lockName(n)}}
+   if(!hasName||needPw){const n=await L.ask({user:user,claim:claim,free:nameFree,cleanName:cleanName,nameRe:NAME_RE,needName:!hasName,needPw:needPw,name:hasName?locked:''});if(n)lockName(n)}}
   L.ready();return}
  if(hasName)return;
  if(den){console.warn('callsign: database rules do not allow users/<uid>/callsign');return}
@@ -1483,13 +1501,18 @@ setTimeout(()=>{const b=$('acbtn');if(b)b.onclick=()=>(user||hint)?signOut():sig
 (function(){const g=id=>document.getElementById(id),ls=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k));localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
 const set=Object.assign({vol:90,dn:true,fps:false},ls('ar-set')||{});
 let st=Object.assign({k:0,d:0,w:0,m:0,bs:0},Object.fromEntries(AR_XK.map(x=>[x,0])),(ARA.hint()?ls('ar-stats'):null)||{});   /* progress is only kept for signed-in players */
+/* ---- CHARACTER LEVEL: XP = coins collected + 30 per kill (bots included). Level L needs 25*(L-1)*(L+2) total XP: Lv2 100, Lv3 250, Lv4 450, Lv5 700 ... ---- */
+const KILL_XP=30,LV_MAX=99,xpAt=L=>25*(L-1)*(L+2);
+function lvInfo(){const xp=Math.max(0,(+st.cn||0)+(+st.k||0)*KILL_XP);let L=1;while(L<LV_MAX&&xp>=xpAt(L+1))L++;const a=xpAt(L),b=xpAt(L+1),mx=L>=LV_MAX;return{lv:L,next:mx?L:L+1,xp:xp,cur:xp-a,need:b-a,p:mx?1:Math.min(1,(xp-a)/(b-a)),max:mx}}
+window.CSK_LVL=lvInfo;let lvSeen=lvInfo().lv;
+function lvCheck(){const L=lvInfo().lv;if(L>lvSeen){lvSeen=L;try{cast('LEVEL UP','You reached level '+L,48,0,'upgrade',.9)}catch(x){}}else lvSeen=L}
 const GNAME={pistol:'Pistol',smg:'SMG',shotgun:'Shotgun',rifle:'Rifle',blaster:'Blaster'};
 function showAcc(){const b=g('accb');if(!b)return;if(!ARA.hint()){b.hidden=true;return}b.hidden=false;let S=0,H=0,rows='';
  for(const w in GNAME){const s=st['s_'+w]||0,h=Math.min(st['h_'+w]||0,s);S+=s;H+=h;if(s)rows+='<div class="accr"><span>'+GNAME[w]+'</span><div class="t"><i style="width:'+Math.round(h/s*100)+'%"></i></div><small>'+Math.round(h/s*100)+'% \u00b7 '+h+' / '+s+'</small></div>'}
  g('accT').textContent=S?Math.round(H/S*100)+'%':'\u2013';g('accC').textContent=(st.cn||0).toLocaleString()+' coins collected';g('accR').innerHTML=rows||'<div class="accn">Fire a few shots to build your accuracy record.</div>'}
-function showSt(){g('s1').textContent=st.k;g('s2').textContent=(st.k/Math.max(1,st.d)).toFixed(1);g('s3').textContent=st.w;g('s4').textContent=st.bs;showAcc()}showSt();window.AR_ST={get:()=>st,set:o=>{for(const k of['k','d','w','m','bs',...AR_XK])st[k]=+o[k]||0;showSt()}};window.AR_HUE=h=>{myHue=h;ls('ar-hue',h);[...(g('sw')?g('sw').children:[])].forEach((c,i)=>c.classList.toggle('on',hs[i]==h))};
-const _oe=onEv;onEv=function(e){try{if(e.k=='kill'){if(e.ai==myId&&e.bi!=myId){st.k++;st.bs=Math.max(st.bs,e.ks||0)}if(e.bi==myId)st.d++;ARA.saveStats(st)}else if(e.k=='win'){st.m++;if(e.id==myId)st.w++;ARA.saveStats(st)}
-  else if(e.id==myId&&(e.k=='coin'||e.k=='chest')&&e.v>0){st.cn=(st.cn||0)+(+e.v|0);ARA.saveStats(st);showAcc()}
+function showSt(){g('s1').textContent=st.k;g('s2').textContent=(st.k/Math.max(1,st.d)).toFixed(1);g('s3').textContent=st.w;g('s4').textContent=st.bs;showAcc()}showSt();window.AR_ST={get:()=>st,set:o=>{for(const k of['k','d','w','m','bs',...AR_XK])st[k]=+o[k]||0;showSt();lvSeen=lvInfo().lv}};window.AR_HUE=h=>{myHue=h;ls('ar-hue',h);[...(g('sw')?g('sw').children:[])].forEach((c,i)=>c.classList.toggle('on',hs[i]==h))};
+const _oe=onEv;onEv=function(e){try{if(e.k=='kill'){if(e.ai==myId&&e.bi!=myId){st.k++;st.bs=Math.max(st.bs,e.ks||0)}if(e.bi==myId)st.d++;ARA.saveStats(st);lvCheck()}else if(e.k=='win'){st.m++;if(e.id==myId)st.w++;ARA.saveStats(st)}
+  else if(e.id==myId&&(e.k=='coin'||e.k=='chest')&&e.v>0){st.cn=(st.cn||0)+(+e.v|0);ARA.saveStats(st);showAcc();lvCheck()}
   else if(e.k=='acc'&&e.id==myId&&e.a){for(const w in e.a){if(!GNAME[w])continue;st['s_'+w]=(st['s_'+w]||0)+(e.a[w][0]|0);st['h_'+w]=(st['h_'+w]||0)+(e.a[w][1]|0)}ARA.saveStats(st);showAcc()}}catch(x){}return _oe.apply(this,arguments)};
 const hs=[8,35,55,130,175,210,265,320];let sh=ls('ar-hue');if(sh!=null)myHue=sh;
 hs.forEach(h=>{const b=document.createElement('button');b.className='s'+(h==sh?' on':'');b.style.background='hsl('+h+' 85% 58%)';b.setAttribute('aria-label','Colour '+h);b.onclick=()=>{myHue=h;ls('ar-hue',h);ARA.profile();[...(g('sw')?g('sw').children:[])].forEach(c=>c.classList.toggle('on',c==b))};g('sw')&&g('sw').appendChild(b)});
@@ -1574,10 +1597,11 @@ document.addEventListener('click',e=>{const b=e.target.closest('#st button,.h-ic
 ap()})();
 /* controls card: click a key box, press a key. Saved in localStorage ('ar-keys'). */
 (function(){const g=id=>document.getElementById(id);
-const ROWS=[['up','Move up'],['down','Move down'],['left','Move left'],['right','Move right'],['fire','Fire (auto-aim)'],['dash','Dash'],['reload','Reload'],['swap','Swap / pick up gun'],['turret','Sentry turret'],['bomb','Bomb / trigger'],['rope','Grapple rope'],['up1','Upgrade 1 · Damage'],['up2','Upgrade 2 · Fire rate'],['up3','Upgrade 3 · Magazine'],['up4','Upgrade 4 · Reload'],['board','Scoreboard (hold)'],['pause','Pause'],['mute','Mute']];
+const ROWS=[['down','Move down','↓'],['right','Move right','→'],['dash','Dash','➖'],['swap','Swap / pick up gun','🔫'],['bomb','Bomb / trigger','💣'],['up1','Upgrade 1 · Damage','⬆'],['up3','Upgrade 3 · Magazine','⏫'],['board','Scoreboard (hold)','🏆'],['mute','Mute','🔊'],['up','Move up','↑'],['left','Move left','←'],['fire','Fire (auto-aim)','⚙'],['reload','Reload','⟳'],['turret','Sentry turret','♜'],['rope','Grapple rope','🪝'],['up2','Upgrade 2 · Fire rate','🔥'],['up4','Upgrade 4 · Reload','⟳'],['pause','Pause','⏸']];
 let cur=null,endAt=0;
 function draw(){const el=g('kg');if(!el)return;
- el.innerHTML='<div class="sr"><div class="sl"><b>Aim / fire</b></div><div class="kb2"><kbd>Mouse</kbd></div></div>'+ROWS.map(([a,l])=>'<div class="sr"><div class="sl"><b>'+l+'</b></div><div class="kb2">'+[0,1].map(i=>'<button type="button" class="ks'+(KB[a][i]?'':' empty')+'" data-a="'+a+'" data-s="'+i+'">'+kname(KB[a][i])+'</button>').join('')+'</div></div>').join('');
+ const RY=[441,486,531,577,623,668,714,760,806,852],SX=[[518,640],[1150,1272]],SW=[106,102];
+ el.innerHTML=ROWS.map(([a,l,ic],n)=>{const c=n<9?0:1,r=n<9?n+1:n-9;return [0,1].map(i=>'<button type="button" class="ks'+(KB[a][i]?'':' empty')+'" aria-label="'+l+'" data-a="'+a+'" data-s="'+i+'" style="--x:'+(SX[c][i]-2)+';--y:'+(RY[r]-21)+';--w:'+(SW[i]+4)+';--h:42">'+kname(KB[a][i])+'</button>').join('')}).join('');
  kbHints()}
 function stop(){window.KBL=1;setTimeout(()=>{window.KBL=0},220);removeEventListener('keydown',onKey,true);cur=null;endAt=Date.now()}
 function onKey(e){e.preventDefault();e.stopImmediatePropagation();if(e.repeat)return;
