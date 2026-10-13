@@ -5,7 +5,7 @@
      - the 2 MB sound bank is not loaded and no audio engine is created
    After login (Firebase reports a user): the sound bank and the remaining art load, then the home screen unlocks.
    Returning players (saved account) skip the gate and load everything up front, as before.
-   Google sign-in itself is in google-auth.js (account chooser popup). */
+   (Google sign-in itself lives in login.js and game.js.) */
 (function(){
 'use strict';
 var root=document.documentElement,pre=false,started=false,done=false,loaderOn=false;
