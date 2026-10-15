@@ -475,3 +475,60 @@ The arena (floor, walls, pickups, bullets, particles, lighting) was dull; it is 
 - Full screen only after login (`CSKLogin.ready()` -> `CSKFullscreen.allow()`); never on sign-in/sign-up. On every fullscreen/rotation change the page re-fits (resize nudge) so no gaps.
 
 - v37: Settings > Edit layout now opens the editor (`window.CSKEditLayout`; the old code clicked a hidden button that only listens for pointerdown). Save & Close pushes the layout to `users/<uid>/layout` at once; it is restored on login on any device (newest edit wins). Firebase rules must allow read/write of `users/<uid>/layout`.
+
+---
+
+## v42 — Knights + new arena items (from knight_arena_tester.html)
+
+- **8 knights, automatic.** Silver Knight, White Paladin, Black Knight, Royal Guard + the four Gilded versions, each with
+  physics cape and its own weapon art. There is no selection screen: every player / bot gets a knight from its id
+  (`KNT.pick` in `knights.js`), so every screen in a room shows the same knight for the same player.
+- **New item art.** Supply crate, medkit, ammo and shield pickups use the new art (`gfx-items.js`); the hex pickup plates are
+  pre-rendered once per colour (`padSpr` in `game.js`).
+- **Adaptive resolution** (`aq.js`) + render-scale cap 1.75 from the tester, so the heavier knight drawing stays smooth.
+- **Loading.** `knights-spr.js`, `knights-cape.js`, `gfx-items.js`, `knights.js` are loaded by `boot-gate.js` only after login
+  (same rule as the sound bank). Until they finish, `drawChar` and the pickups use the original vector art; if loading
+  fails the game simply keeps the original characters.
+- `game.js` changes are small and marked: `drawChar` hook, `gfx()` / `padSpr()`, crate / medkit / ammo / shield art with
+  vector fallbacks, `AQ` call in `frame()`.
+
+## v43 — Button layout editor shows the new button look
+- The editor preview now uses the in-game art for every control: joystick pad + knob, and OPEN / SWAP pills and the supply-crate
+  loot panel drawn in the same style as the live HUD (`edPill` / `edLoot` in `game.js`). FIRE / DASH / RELOAD / TURRET / BOMB already did.
+- OPEN / SWAP / LOOT LIST are hit-tested by their rectangle instead of a circle.
+- The editor toolbar is see-through and passes taps through its gaps so the loot panel behind it can be dragged.
+
+## v44 - new map art (v45: floor baked at final size, cheaper walls - fixes lag)
+- Floor: `map-floor.jpg` (your tile texture, cropped to an exact grid period) tiled across the whole 4800x3200 arena, 96 world units per cell.
+- Props: `map-objs.webp` atlas cut from your sprite sheet (pillars, crates, barrels, sandbags, spikes, banners, tents, wells, dragon statues, bushes, rocks). Placement is in `setLevel()` in game.js (own PRNG, so all players see the same map).
+- Walls: same collision rects as before; drawn as dark stone slabs with pillar sprites. Tower blocks on short square walls.
+- Removed: old decor (grass/rock/pond/flag/crystal/sigil), colour patches, zone names, rune rings, centre emblem, cloud shadows, edge glow, wall braziers/flames, ambient fireflies/embers.
+- Props are visual only (no collision) so gameplay, bots and multiplayer sync are unchanged.
+
+## v46 - Ultra HD option
+- Graphics quality now has LOW / MED / HIGH / ULTRA HD. LOW, MED and HIGH use the original arena art, unchanged.
+- ULTRA HD (GFXQ 3) draws the new tiled floor, pillar walls and prop art (`map-floor.jpg`, `map-objs.webp`, loaded only when Ultra HD is used). Old decor, braziers and ambient motes are not drawn in that mode.
+
+## v47 - solid Ultra HD props
+- In an Ultra HD match every prop and every wall pillar/tower block is a solid collider (flagged rects in WALLS, 5th element = 1), sized from `PCOL` footprints. Players, bots, turrets and bullets all collide through WALLS as before.
+- Bullets now use a swept test (`hitWall`) from their previous position, and from the shooter's position on the first tick, so fast bullets can't skip thin objects or spawn through them.
+- The host sends `ux` in the snapshot so clients build the same colliders. LOW/MED/HIGH matches have no prop colliders.
+
+---
+## v50 — performance pass
+- Collision uses a spatial grid (`WG` in game.js); Ultra HD's hundreds of solid props no longer cost a full scan per player/bullet step.
+- The static arena (floor, props, walls, pillars, zone names, rim) is baked into cached canvas tiles (battle-fx.js `TL`, `blitTiles`); only moving things draw live.
+- Off-screen coins, pickups, crates and players are skipped. Background menu animation loops stop during a match.
+- Low-end devices (<=4 cores / <=3GB, or mobile) get capped resolution, lower adaptive floor (60%) and automatic LITE effects.
+- Classic (non-Ultra) mode: grass/water decor is now baked in a still pose.
+
+## v51 — sharpness restored
+Resolution is never lowered (adaptive scaler locked to 100%, full device pixel ratio up to 1.75 on every device) and arena tiles are baked at the exact screen scale. Speed comes from the collision grid, baked arena, culling and loop fixes only.
+
+## v52
+Screen vignette moved from a per-frame full-screen canvas blend to a CSS overlay (#csk-vig); the full-canvas clear is skipped when the arena tiles cover the view.
+
+## v53
+- Screen-edge vignette (`#csk-vig`) removed; battle-fx.js now deletes the element. Low-HP / hit red flashes are unchanged.
+- **Settings > RANK tab** (`rank.js`, styles at the end of `settings.css`): leaderboard ranked by coins collected (`st.cn`). Shows rank, Google profile picture, callsign and coins; your own row is highlighted and pinned at the bottom with your rank.
+- Cloud: each signed-in player's coins are copied to `leaderboard/<uid> {n,p,cn,t}` after every stats sync (game.js `lbWrite`). **Add the `leaderboard` block from `database.rules.rtc-snippet.json` to the Firebase rules** (read: any signed-in user; write: own uid only; index on `cn`). Top 100 are loaded.

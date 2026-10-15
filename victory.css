@@ -1,4 +1,4 @@
-#vs{position:fixed;inset:0;z-index:9000;background:#000;display:none;overflow:hidden}
+#vs{position:fixed;inset:0;z-index:980;background:#000;display:none;overflow:hidden}
 #vs.on{display:block;animation:vsin .5s ease-out}
 #vs:before{content:"";position:absolute;inset:-30px;background:url(victory-bg.jpg) center/cover;filter:blur(18px) brightness(.5)}
 @keyframes vsin{from{opacity:0}to{opacity:1}}
