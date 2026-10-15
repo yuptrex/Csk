@@ -55,10 +55,23 @@ async function google(){
  var p=new firebase.auth.GoogleAuthProvider();p.setCustomParameters({prompt:'select_account'});
  try{await a.signInWithPopup(p);say('Signing in\u2026')}
  catch(e){if(e&&e.code==='auth/popup-blocked'){try{await a.signInWithRedirect(p);return}catch(x){e=x}}fail(e)}}
+/* "playasguest" / "guest123" in the Gmail+password fields: a documented shortcut to
+   skip account sign-in entirely and go straight into a local, unsynced guest session
+   -- the same state the game is already in before anyone signs in, where the Callsign
+   field on the home screen asks for (and saves) a name. No Firebase account is
+   created or touched. */
+var GUEST_USER='playasguest',GUEST_PASS='guest123';
+function isGuestShortcut(email,pass){return email.toLowerCase()===GUEST_USER&&pass===GUEST_PASS}
+function guestEnter(){
+ done=true;setBusy(false);say('');
+ try{CSKBoot&&CSKBoot.ensure&&CSKBoot.ensure()}catch(e){}
+ hide();
+ setTimeout(function(){try{var nm=$('nm');if(nm&&!nm.value)nm.focus()}catch(e){}},420)}
 async function emailLogin(){
  if(busy)return;if(needTerms())return;
  var a=getAuth(),email=em.value.trim(),pass=pw.value;
  if(!email||!pass){say('Enter your Gmail and password.','bad');return}
+ if(isGuestShortcut(email,pass)){guestEnter();return}
  if(!/^\S+@\S+\.\S+$/.test(email)){say('That does not look like a valid email address.','bad');return}
  if(!a){say('Could not reach the server. Check your connection or ad-blocker, then reload.','bad');return}
  setBusy(true);say('Signing in\u2026');
