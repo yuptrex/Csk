@@ -1573,8 +1573,8 @@ setTimeout(()=>{const b=$('acbtn');if(b)b.onclick=()=>(user||hint)?signOut():sig
 (function(){const g=id=>document.getElementById(id),ls=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k));localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
 const set=Object.assign({vol:90,dn:true,fps:false},ls('ar-set')||{});
 let st=Object.assign({k:0,d:0,w:0,m:0,bs:0},Object.fromEntries(AR_XK.map(x=>[x,0])),(ARA.hint()?ls('ar-stats'):null)||{});   /* progress is only kept for signed-in players */
-/* ---- CHARACTER LEVEL: XP = coins collected + 30 per kill (bots included). Level L needs 25*(L-1)*(L+2) total XP: Lv2 100, Lv3 250, Lv4 450, Lv5 700 ... ---- */
-const KILL_XP=30,LV_MAX=99,xpAt=L=>25*(L-1)*(L+2);
+/* ---- CHARACTER LEVEL: XP = coins collected + 20 per kill (bots included). Level L needs 100*(L-1)*(L+2) total XP: Lv2 400, Lv3 1000, Lv4 1800, Lv5 2800 ... ---- */
+const KILL_XP=20,LV_MAX=99,xpAt=L=>100*(L-1)*(L+2);
 function lvInfo(){const xp=Math.max(0,(+st.cn||0)+(+st.k||0)*KILL_XP);let L=1;while(L<LV_MAX&&xp>=xpAt(L+1))L++;const a=xpAt(L),b=xpAt(L+1),mx=L>=LV_MAX;return{lv:L,next:mx?L:L+1,xp:xp,cur:xp-a,need:b-a,p:mx?1:Math.min(1,(xp-a)/(b-a)),max:mx}}
 window.CSK_LVL=lvInfo;let lvSeen=lvInfo().lv;
 function lvCheck(){const L=lvInfo().lv;if(L>lvSeen){lvSeen=L;try{cast('LEVEL UP','You reached level '+L,48,0,'upgrade',.9)}catch(x){}}else lvSeen=L}
