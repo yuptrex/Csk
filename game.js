@@ -173,7 +173,7 @@ function buildProps(rr){
  q0.forEach((w,j)=>{const hor=w[2]>=w[3];
   if(hor){tryC(PT.flag2.h,w[0]-34,w[1]+w[3],j&1,6,50,0);tryC(PT.flag2.h,w[0]+w[2]+34,w[1]+w[3],(j&1)^1,6,50,0)}
   else{tryC(PT.flag1.h,w[0]+w[2]/2,w[1]-20,j&1,6,50,0);tryC(PT.flag1.h,w[0]+w[2]/2,w[1]+w[3]+52,(j&1)^1,6,50,0)}})}
-function setLevel(n,ux){WG.dirty=1;LV=n;UX=ux===undefined?((window.GFXQ==null?2:window.GFXQ)>=3?1:0):(ux?1:0);SEED=n==1?1337:9001;for(const a of[WALLS,PKP,CHP,PKTY,DEC,PAT,CSP,ZN,PROPS])a.length=0;
+function setLevel(n,ux){WG.dirty=1;LV=n;UX=ux===undefined?((window.GFXQ==null?3:window.GFXQ)>=3?1:0):(ux?1:0);SEED=n==1?1337:9001;for(const a of[WALLS,PKP,CHP,PKTY,DEC,PAT,CSP,ZN,PROPS])a.length=0;
  const BS=n==2?BASE2:BASE1,PB=n==2?PKB2:PKB1,CB=n==2?CHB2:CHB1;
  for(const qx of[0,1])for(const qy of[0,1])for(const[x,y,w,h]of BS)WALLS.push([qx?4800-x-w:x,qy?3200-y-h:y,w,h]);
  if(n==2)WALLS.push([2100,1300,240,40],[2460,1300,240,40],[2100,1860,240,40],[2460,1860,240,40],[2100,1340,40,200],[2100,1660,40,200],[2660,1340,40,200],[2660,1660,40,200]);

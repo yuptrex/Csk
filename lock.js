@@ -15,5 +15,5 @@ document.addEventListener('dragstart',function(e){e.preventDefault()},true);
 /* Low-end / mobile detection. */
 (function(){var m=navigator.deviceMemory||8,c=navigator.hardwareConcurrency||8,mob=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.platform));
 window.CSK_LOW=m<=4||c<=4;
-try{if(window.CSK_LOW&&!localStorage.getItem('ar-set2'))localStorage.setItem('ar-set2',JSON.stringify({gfx:0,shk:1,fx:0}))}catch(e){}
+/* Ultra HD is the default graphics level for every new player (no low-end downgrade) */
 })();
